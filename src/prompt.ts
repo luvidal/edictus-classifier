@@ -31,6 +31,7 @@ ${isPdf ? `PDF range rules:
 
 Debt/account distinctions:
 - Bank-issued credit-card statements ("Estado de Cuenta ... Tarjeta de Crédito", card number, CAE, billed amount, minimum payment, purchases) are deuda-consumo, not cartola-banco.
+- Consolidated bank debt-position reports showing multiple product types at once (mortgages + consumer credit + credit lines + credit cards summary in the same view) are cartola-banco, not deuda-consumo — even when an individual row has a balance and maturity date. Reserve deuda-consumo for documents focused on a specific consumer credit or credit-card account.
 - Mortgage/consumer debt doctypes require a standalone bank statement/certificate/detail or portal page for that credit; an interior clause page from a notarial deed is not enough.
 
 Date rule:

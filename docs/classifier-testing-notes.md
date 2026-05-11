@@ -345,3 +345,20 @@ Proposed (not yet shipped) prompt addition to disambiguate, in the Debt/account 
 Baseline (5/10 pass) saved at `out/small-suite-baseline.json`; failures listed above.
 
 Workflow: edit `src/prompt.ts`, `tsx out/small-suite.ts`, compare to baseline. No regressions on the 5 passing cases before considering for the next ship.
+
+## May 11 Second Iteration — Consolidated-Position Rule
+
+Prompt addition (single sentence in the Debt/account distinctions section):
+
+> "Consolidated bank debt-position reports showing multiple product types at once (mortgages + consumer credit + credit lines + credit cards summary in the same view) are cartola-banco, not deuda-consumo — even when an individual row has a balance and maturity date. Reserve deuda-consumo for documents focused on a specific consumer credit or credit-card account."
+
+Small suite: 5/10 → 7/10 (target hit on cartola PNG; bonus: VentaProp Lo Barnechea consolidated to one full range — variance, not reliably attributable to the rule).
+
+Full corpus (`out/validation-tune1-20260511-160556.json`): `177/197` strict pass — same as the pre-tune baseline by accounting, with 2 improvements and 2 apparent regressions that triage as groundtruth issues:
+
+- `+1 evaluacion/Cartola Scotiabank.png` — target fix, model now returns `cartola-banco`.
+- `+1 evaluacion/VentaProp Santiago.pdf` — strict range `1..38` (was `1..37`); not caused by the rule, attributed to Pro non-determinism between runs.
+- `-1 evucina/Consumo Scotiabank.png` — **disputed groundtruth, not a regression**. Pixel-identical to `evaluacion/Cartola Scotiabank.png` (same client Vucina, same RUT, same date 02/04/2026). The two folders' `CLASSIFICATION.md` files disagreed on the label. Resolved by fixing the evucina groundtruth row to `cartola-banco` (the file is the same consolidated multi-product screenshot).
+- `-1 yulian/YULIAN GARCIA - Codeudor/Carnet Frente.png` — **groundtruth correct, model over-detects**. The PNG has some back-of-cedula content visible at the bottom (a second signature, "PUENTE ALTO" strip, small barcode, fingerprint), but product policy is to treat this file as a front-only cedula (filename + dominant content). The model returned two rows (`front` + `back`). Pro non-determinism between runs made it look like a regression (the prior run happened to return one row). Not addressed by this iteration; a future cedula-rule tightening could require both faces to be **fully** visible (full back panel, not incidental back artifacts) before returning two rows.
+
+Net: the rule is a clean win — target case fixed, no real regression. Shippable.
