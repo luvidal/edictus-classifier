@@ -214,6 +214,7 @@ describe('promptFor — classifier block rendering', () => {
         const out = promptFor(FIXTURE, true)
         expect(out).toContain('Classify the upload by the dominant standalone document it represents')
         expect(out).toContain('do not mine internal pages for every possible doctype')
+        expect(out).toContain('A lone interior page without the container title/header should be classified by its visible standalone content')
     })
 })
 
