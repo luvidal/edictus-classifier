@@ -5,7 +5,8 @@ Lean AI-first document classifier satellite for Jogi. One Gemini call → segmen
 ## Operating memory
 
 - Read this file before editing; it is the canonical module contract.
-- Parent Jogi context lives in `../jogi`; use cases are there and doctypes are in `../jogi/data/doctypes.json`. Do not modify `../jogi` unless the PM explicitly asks.
+- Parent Jogi context lives in `../jogi`; hand-edit doctypes only in `../jogi/data/doctypes.yaml`, regenerate `../jogi/data/doctypes.json` with `npm run build:doctypes`, and configure live classifier runs from that generated JSON. Do not hand-edit generated doctypes JSON.
+- Do not modify `../jogi` unless the PM explicitly asks.
 - Keep code simple and minimal; add LOC only when necessary.
 
 ## Contract
@@ -38,6 +39,7 @@ Lean AI-first document classifier satellite for Jogi. One Gemini call → segmen
 ## Evaluation notes
 
 - Current debugging context lives in `docs/classifier-testing-notes.md`; read it before changing prompt, definitions, model, or sweep cases.
+- For concrete production classifier regressions, sync/unit checks are not proof of a fix. Re-run the exact repro bytes with the production-like Vertex path and the generated parent doctypes catalog before claiming the model behavior changed; compare against the pre-fix catalog when the root cause is disputed.
 - Legacy trend JSON copied from Jogi's removed `tests/opus` sandbox lives in `docs/artifacts/opus/`.
 - Keep new manual run artifacts under gitignored `out/`; do not overwrite or delete archived trend data.
 - Doctype YAML refactor guard: pre-YAML snapshot lives at `docs/artifacts/doctype-yaml-refactor/doctypes.pre-yaml-20260514.json`; after generated `../jogi/data/doctypes.json` changes, run `npm run doctype:regression`. Before relying on `classifier`-only catalog tuning for cache invalidation, fix the host cache key because current `@jogi/docs.getPromptVersion()` hashes expanded doctypes and drops unknown fields such as `classifier`.
