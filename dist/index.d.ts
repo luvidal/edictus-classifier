@@ -3,8 +3,8 @@
  *
  * One Gemini call sees the whole file and returns final segments. Local code
  * only does geometry cleanup: duplicate collapse, exact same-range conflict
- * resolution, and PDF gap fill. No local OCR, anchors, page ledger, or doctype
- * detector.
+ * resolution, blank-page range attachment, and PDF gap fill. No local OCR,
+ * anchors, page ledger, or doctype detector.
  */
 /**
  * Structured classification hints for a doctype. Authored in the host's

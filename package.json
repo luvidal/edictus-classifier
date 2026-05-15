@@ -22,8 +22,17 @@
     "test": "vitest run",
     "test:watch": "vitest --watch",
     "corpus": "tsx tests/corpus.ts",
+    "corpus:manifest": "CORPUS_ROOT=corpus tsx tests/corpus-manifest.ts --check",
+    "corpus:manifest:per-file": "CORPUS_ROOT=corpus/per-file tsx tests/corpus-manifest.ts --check",
+    "corpus:manifest:per-solicitud": "CORPUS_ROOT=corpus/per-solicitud tsx tests/corpus-manifest.ts --check",
+    "groundtruth:all": "CORPUS_ROOT=corpus tsx tests/groundtruth.ts",
+    "groundtruth:per-file": "CORPUS_ROOT=corpus/per-file tsx tests/groundtruth.ts",
+    "groundtruth:per-solicitud": "CORPUS_ROOT=corpus/per-solicitud tsx tests/groundtruth.ts",
+    "groundtruth:per-solicitud:trusted": "CORPUS_ROOT=corpus/per-solicitud tsx tests/groundtruth.ts --minInspection=90",
     "groundtruth": "tsx tests/groundtruth.ts",
-    "param-sweep": "tsx tests/param-sweep.ts"
+    "param-sweep": "tsx tests/param-sweep.ts",
+    "corpus:review": "CORPUS_ROOT=corpus tsx dev/server.ts",
+    "doctype:regression": "tsx tests/doctype-refactor-regression.ts"
   },
   "dependencies": {
     "pdf-lib": "^1.17.1"

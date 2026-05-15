@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest'
-import { PDFDocument } from 'pdf-lib'
+import { PDFDocument, rgb } from 'pdf-lib'
 import * as fs from 'fs'
 import * as path from 'path'
 import { classify, configure, getClassifierFingerprint, getClassifierProfile, getDoctypes, NO_CLASIFICADO, type DoctypesMap, type GeminiCall } from '../src/index'
@@ -29,9 +29,13 @@ const DOCTYPES: DoctypesMap = {
     'resumen-boletas-sii': { label: 'Resumen boletas', freq: 'annual' },
 }
 
-async function makePdf(pages: number): Promise<Buffer> {
+async function makePdf(pages: number, blankPages: number[] = []): Promise<Buffer> {
     const doc = await PDFDocument.create()
-    for (let i = 0; i < pages; i++) doc.addPage([100, 100])
+    const blank = new Set(blankPages)
+    for (let i = 0; i < pages; i++) {
+        const page = doc.addPage([100, 100])
+        if (!blank.has(i + 1)) page.drawRectangle({ x: 10, y: 10, width: 30, height: 30, color: rgb(0, 0, 0) })
+    }
     return Buffer.from(await doc.save())
 }
 
@@ -137,6 +141,7 @@ describe('classify (single-page image)', () => {
         await classify(await makePdf(1), 'application/pdf')
         expect(prompt).toContain('Classify the upload by the dominant standalone document it represents')
         expect(prompt).toContain('do not mine internal pages for every possible doctype')
+        expect(prompt).toContain('no document starts on a blank page')
         expect(prompt).toContain('Long legal packets and certified notarial deed copies are dominant-document uploads')
     })
 
@@ -214,6 +219,7 @@ describe('promptFor — classifier block rendering', () => {
         const out = promptFor(FIXTURE, true)
         expect(out).toContain('Classify the upload by the dominant standalone document it represents')
         expect(out).toContain('do not mine internal pages for every possible doctype')
+        expect(out).toContain('no document starts on a blank page')
         expect(out).toContain('A lone interior page without the container title/header should be classified by its visible standalone content')
     })
 })
@@ -302,6 +308,49 @@ describe('classify (PDF)', () => {
             `${NO_CLASIFICADO}@3..3`,
             'liquidaciones-sueldo@4..4',
             `${NO_CLASIFICADO}@5..5`,
+        ])
+    })
+
+    it('attaches a trailing blank page to the previous document range', async () => {
+        const pdf = await makePdf(3, [3])
+        configure({
+            doctypes: DOCTYPES,
+            geminiCall: stubGemini([
+                { id: 'carpeta-tributaria', start: 1, end: 2, confidence: 0.95 },
+            ]),
+        })
+        const segs = await classify(pdf, 'application/pdf')
+        expect(segs.map(s => `${s.id}@${s.start}..${s.end}`)).toEqual(['carpeta-tributaria@1..3'])
+    })
+
+    it('attaches an interior blank page to the preceding document, not the next one', async () => {
+        const pdf = await makePdf(3, [2])
+        configure({
+            doctypes: DOCTYPES,
+            geminiCall: stubGemini([
+                { id: 'declaracion-anual-impuestos', start: 1, end: 1, confidence: 0.95 },
+                { id: 'cartola-banco', start: 3, end: 3, confidence: 0.95 },
+            ]),
+        })
+        const segs = await classify(pdf, 'application/pdf')
+        expect(segs.map(s => `${s.id}@${s.start}..${s.end}`)).toEqual([
+            'declaracion-anual-impuestos@1..2',
+            'cartola-banco@3..3',
+        ])
+    })
+
+    it('leaves leading blank pages as no-clasificado', async () => {
+        const pdf = await makePdf(2, [1])
+        configure({
+            doctypes: DOCTYPES,
+            geminiCall: stubGemini([
+                { id: 'cartola-banco', start: 2, end: 2, confidence: 0.95 },
+            ]),
+        })
+        const segs = await classify(pdf, 'application/pdf')
+        expect(segs.map(s => `${s.id}@${s.start}..${s.end}`)).toEqual([
+            `${NO_CLASIFICADO}@1..1`,
+            'cartola-banco@2..2',
         ])
     })
 

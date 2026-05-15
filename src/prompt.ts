@@ -46,6 +46,7 @@ ${isPdf ? `PDF range rules:
 - "start" and "end" are 1-indexed inclusive page ranges.
 - One physical/logical document gets one row spanning all its pages.
 - Multi-page certificates/reports/cards remain one row; do not split by page.
+- If a blank, near-blank, or scanner-artifact page appears immediately after a classified document and before any new visible document begins, include it in the previous document's range; no document starts on a blank page.
 - Multiple recurring instances, such as monthly liquidaciones or annual SII forms, get separate rows with disjoint ranges and their own docdate.
 - Do not return two different non-container doctypes for the exact same page range. Choose the one best supported by visible title/issuer/layout.
 - Container PDFs such as carpeta-tributaria return a single row whose page range covers the pages actually present in this upload when the upload presents as that container (visible title/cover/header or multiple consecutive container pages); do not emit child documents (F22, boletas, etc.) inside that container. Do not extrapolate the range beyond the last visible page (a 4-page extract of a carpeta is @1..4, not @1..12). A lone interior page without the container title/header should be classified by its visible standalone content.

@@ -1,0 +1,1546 @@
+{
+  "carton-ds1": {
+    "label": "Cartón DS1",
+    "shortLabel": "DS1",
+    "source": "MINVU",
+    "category": "personal",
+    "definition": "Cartón DS1 del MINVU — certificado de subsidio habitacional Decreto Supremo 1. Emitido por Ministerio de Vivienda. Indica beneficiario, estado civil, monto del subsidio. NO es avalúo fiscal. NO es escritura de compraventa.",
+    "fields": [
+      {
+        "key": "beneficiario",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "estado_civil",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "monto_subsidio",
+        "type": "num",
+        "internal": true
+      },
+      {
+        "key": "formula_calculo",
+        "type": "string",
+        "internal": true
+      }
+    ]
+  },
+  "cedula-identidad": {
+    "label": "Cédula de Identidad",
+    "shortLabel": "Carnet",
+    "source": "Registro Civil",
+    "category": "personal",
+    "freq": "once",
+    "count": 1,
+    "parts": [
+      "Frente",
+      "Revés"
+    ],
+    "extractScope": "firstPage",
+    "definition": "Cédula de Identidad chilena del Servicio de Registro Civil e Identificación. Tarjeta plastificada con foto, nombre, RUT, fecha de nacimiento, nacionalidad. Frente: foto y datos personales. Reverso: firma, huella, código QR/barras. NO es pasaporte. NO es licencia de conducir.",
+    "dateHint": "Usa la fecha de emisión de la cédula. Debe coincidir con el campo `fecha_emision`. De las múltiples fechas impresas (nacimiento, emisión, vencimiento) es la INTERMEDIA cronológicamente: posterior a fecha de nacimiento y anterior a fecha de vencimiento. Etiqueta típica: 'FECHA DE EMISIÓN' o 'EMISIÓN'. Si no la encuentras etiquetada pero ves una fecha de vencimiento, la emisión es 4 años antes (cédulas chilenas y de residentes extranjeros tienen validez de 4 años).",
+    "fields": [
+      {
+        "key": "rut",
+        "type": "string",
+        "ai": "RUN chileno impreso al pie de la cédula como 'RUN 26.621.198-8' (frente) y también en la última línea del MRZ del reverso (ej. 'VEN26621198<8<0' → 26621198-8). Formato XX.XXX.XXX-X o XX.XXX.XXX-K. El dígito verificador al final puede ser 0-9 o K, NUNCA 'B' (si lees 'B' es un '8' mal reconocido). No lo confundas con 'NÚMERO DOCUMENTO' (otro campo distinto) ni con la fecha de nacimiento del MRZ. Si aparece en ambos lados, cópialo del frente."
+      },
+      {
+        "key": "nombres",
+        "type": "string"
+      },
+      {
+        "key": "apellidos",
+        "type": "string"
+      },
+      {
+        "key": "nacionalidad",
+        "type": "string",
+        "ai": "Valor literal del campo 'NACIONALIDAD' en el frente de la cédula. En cédulas de extranjeros es el código ISO de 3 letras del país de origen (VEN, PER, COL, ARG, BOL, ECU, HTI, CHN, etc.). En cédulas chilenas es 'CHILENA' o 'CHL'. NUNCA devuelvas 'EXTRANJERO' — esa palabra es el tipo de cédula (título en el encabezado), no la nacionalidad."
+      },
+      {
+        "key": "sexo",
+        "type": "string",
+        "internal": true,
+        "ai": "Una sola letra: 'M' (masculino) o 'F' (femenino). Nunca devuelvas el código de nacionalidad ni otro valor — si no lees claramente M o F, devuelve null."
+      },
+      {
+        "key": "fecha_nacimiento",
+        "type": "date"
+      },
+      {
+        "key": "numero_documento",
+        "type": "string",
+        "internal": true,
+        "ai": "Número del documento de origen impreso en el frente como 'NÚMERO DOCUMENTO' (ej. '603.113.124'). Solo en cédulas de extranjeros. NO es el RUN, NO es el MRZ del reverso. Si no existe el campo, devuelve null."
+      },
+      {
+        "key": "fecha_emision",
+        "type": "date",
+        "internal": true
+      },
+      {
+        "key": "fecha_vencimiento",
+        "type": "date",
+        "internal": true
+      },
+      {
+        "key": "lugar_nacimiento",
+        "type": "string",
+        "internal": true,
+        "ai": "Texto tal cual aparece después de 'Nació en:' en el reverso de la cédula. Cópialo literal sin interpretar — puede ser una sola palabra (comuna), o varios términos separados por coma (barrio/localidad, comuna). Ejemplos válidos: 'PUENTE ALTO', 'FRANKLIN, SANTIAGO', 'ISLUGA, COLCHANE'"
+      },
+      {
+        "key": "profesion",
+        "type": "string",
+        "internal": true
+      }
+    ],
+    "howToObtain": {
+      "steps": [
+        "Toma una foto clara de tu cédula de identidad por ambos lados",
+        "Asegúrate que se vean todos los datos sin reflejos",
+        "Sube el <b>frente</b> y el <b>revés</b> por separado"
+      ],
+      "tips": [
+        "Usa buena iluminación para evitar sombras",
+        "Coloca la cédula sobre un fondo oscuro para mejor contraste"
+      ]
+    }
+  },
+  "cert-nacimiento-hijo": {
+    "label": "Cert. de Nacimiento (Hijo)",
+    "shortLabel": "Nacimiento",
+    "source": "Registro Civil",
+    "category": "personal",
+    "multiInstance": true,
+    "definition": "Certificado de Nacimiento del Registro Civil chileno. PDF oficial con logo del Registro Civil e Identificación. Título 'CERTIFICADO DE NACIMIENTO'. Tiene folio, código de verificación, circunscripción, número de inscripción. Datos: nombre del inscrito, RUT, fecha de nacimiento, nombre y RUT de padre y madre. NO es certificado de matrimonio. NO es cédula de identidad.",
+    "fields": [
+      {
+        "key": "folio",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "codigo_verificacion",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "circunscripcion",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "numero_inscripcion",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "año_registro",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "nombre",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "rut",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "fecha_nacimiento",
+        "type": "date",
+        "internal": true
+      },
+      {
+        "key": "hora_nacimiento",
+        "type": "time",
+        "internal": true
+      },
+      {
+        "key": "sexo",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "padre.nombre",
+        "type": "string"
+      },
+      {
+        "key": "padre.rut",
+        "type": "string"
+      },
+      {
+        "key": "madre.nombre",
+        "type": "string"
+      },
+      {
+        "key": "madre.rut",
+        "type": "string"
+      },
+      {
+        "key": "fecha_emision",
+        "type": "date",
+        "internal": true
+      }
+    ],
+    "howToObtain": {
+      "steps": [
+        "Ingresa a <a href='https://www.registrocivil.cl' target='_blank' rel='noopener'>www.registrocivil.cl</a>",
+        "Haz clic en <b>Obtener Certificados</b>",
+        "Selecciona <b>Certificado de Nacimiento</b>",
+        "Inicia sesión con tu ClaveÚnica",
+        "Descarga el certificado en formato PDF"
+      ],
+      "tips": [
+        "El certificado tiene validez de 60 días",
+        "Puedes obtener hasta 3 certificados gratis por año"
+      ]
+    }
+  },
+  "certificado-antiguedad": {
+    "label": "Cert. Antigüedad Laboral",
+    "shortLabel": "Antigüedad",
+    "disambiguator": "empleador",
+    "source": "Empleador",
+    "category": "personal",
+    "freq": "once",
+    "count": 1,
+    "multiInstance": true,
+    "definition": "Certificado que acredita la antigüedad laboral de un trabajador. Emitido por el empleador, institución (Ejército, Carabineros, etc.) u organismo público. Indica fecha de ingreso, cargo y/o tiempo de servicio. Puede incluir remuneración.",
+    "fields": [
+      {
+        "key": "empleador",
+        "type": "string"
+      },
+      {
+        "key": "rut_empleador",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "empleado",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "rut",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "cargo",
+        "type": "string",
+        "ai": "Cargo o función del trabajador. En instituciones militares puede aparecer como rango/grado antes del nombre (ej: CAP.=Capitán, SGT.=Sargento, TTE.=Teniente). Extrae el cargo completo."
+      },
+      {
+        "key": "fecha_ingreso",
+        "type": "date"
+      },
+      {
+        "key": "antiguedad",
+        "type": "string"
+      },
+      {
+        "key": "renta",
+        "type": "num",
+        "ai": "Extrae la remuneración o renta mensual si está indicada en el documento. Puede aparecer como sueldo, remuneración, renta bruta o líquida. Valor numérico entero en pesos sin separador de miles. Si no se menciona, omitir."
+      }
+    ]
+  },
+  "certificado-matrimonio": {
+    "label": "Cert. de Matrimonio",
+    "shortLabel": "Matrimonio",
+    "source": "Registro Civil",
+    "category": "personal",
+    "freq": "once",
+    "count": 1,
+    "definition": "Certificado de Matrimonio del Registro Civil chileno. PDF oficial con logo del Registro Civil. Título 'CERTIFICADO DE MATRIMONIO'. Datos: nombres y RUTs de ambos cónyuges, fecha de celebración, régimen patrimonial. NO es certificado de nacimiento. NO es certificado de soltería.",
+    "fields": [
+      {
+        "key": "folio",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "codigo_verificacion",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "circunscripcion",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "numero_inscripcion",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "año_registro",
+        "type": "num",
+        "internal": true
+      },
+      {
+        "key": "marido.nombre",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "marido.rut",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "marido.fecha_nacimiento",
+        "type": "date",
+        "internal": true
+      },
+      {
+        "key": "mujer.nombre",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "mujer.rut",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "mujer.fecha_nacimiento",
+        "type": "date",
+        "internal": true
+      },
+      {
+        "key": "fecha_celebracion",
+        "type": "date",
+        "internal": true
+      },
+      {
+        "key": "hora_celebracion",
+        "type": "time",
+        "internal": true
+      },
+      {
+        "key": "regimen_patrimonial",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "fecha_emision",
+        "type": "date",
+        "internal": true
+      }
+    ],
+    "howToObtain": {
+      "steps": [
+        "Ingresa a <a href='https://www.registrocivil.cl' target='_blank' rel='noopener'>www.registrocivil.cl</a>",
+        "Haz clic en <b>Obtener Certificados</b>",
+        "Selecciona <b>Certificado de Matrimonio</b>",
+        "Inicia sesión con tu ClaveÚnica",
+        "Descarga el certificado en formato PDF"
+      ],
+      "tips": [
+        "El certificado tiene validez de 60 días"
+      ]
+    }
+  },
+  "certificado-no-matrimonio": {
+    "label": "Cert. No-Matrimonio",
+    "shortLabel": "NoMatrimonio",
+    "source": "Registro Civil",
+    "category": "personal",
+    "freq": "once",
+    "count": 1,
+    "definition": "Certificado de Soltería o No-Matrimonio del Registro Civil chileno. PDF oficial. Acredita que una persona NO tiene matrimonio vigente. Datos mínimos: nombre y RUT. NO es certificado de matrimonio (ese acredita que SÍ hay matrimonio).",
+    "fields": [
+      {
+        "key": "rut",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "nombre",
+        "type": "string",
+        "internal": true
+      }
+    ]
+  },
+  "cotizaciones-afp": {
+    "label": "Cotizaciones AFP",
+    "shortLabel": "AFP",
+    "source": "AFP o Previred",
+    "category": "ingresos",
+    "freq": "once",
+    "count": 1,
+    "definition": "Certificado de cotizaciones previsionales AFP. Puede ser emitido directamente por la AFP (AFP Modelo, Habitat, Cuprum, Capital, Planvital, Provida, etc.) o descargado desde Previred. Muestra una tabla con todos los períodos cotizados: fecha de pago, monto en pesos, cuotas y RUT del empleador pagador. El título suele ser \"CERTIFICADO COTIZACIONES\" o similar. Permite detectar lagunas (meses sin cotización de empleador).",
+    "dateHint": "Usa el período MÁS RECIENTE de la tabla de cotizaciones (ej: última fila es 12-2025 → 2025-12-01), NO la fecha de emisión del certificado",
+    "fields": [
+      {
+        "key": "afp",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "nombre",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "rut",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "periodo_desde",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "periodo_hasta",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "folio_certificacion",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "codigo_validador",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "meses_laguna",
+        "type": "number",
+        "ai": "Cuenta los meses dentro del rango cubierto (periodo_desde a periodo_hasta inclusive) donde NO aparece ninguna cotización de empleador. No cuentes como laguna los meses con cotización independiente (COT. NORMAL AFIL. INDEPENDIENTE). Devuelve un número entero.",
+        "internal": true
+      },
+      {
+        "key": "lagunas_largas",
+        "type": "number",
+        "ai": "Cuenta cuántas secuencias de meses consecutivos sin cotización de empleador tienen MÁS de 2 meses seguidos. Ejemplo: una brecha de 3 meses = 1 laguna larga; dos brechas de 3 meses separadas = 2 lagunas largas. Devuelve un número entero.",
+        "internal": true
+      },
+      {
+        "key": "empleador_anterior",
+        "type": "number",
+        "ai": "Si la tabla contiene más de un RUT pagador distinto, calcula cuántos meses han pasado desde la última cotización del empleador anterior (el que pagó antes del empleador actual). Por ejemplo: si el empleador anterior pagó por última vez en 08-2024 y el período más reciente del documento es 12-2025, devuelve 16. Si todos los períodos tienen el mismo RUT pagador, devuelve null.",
+        "internal": true
+      },
+      {
+        "key": "cotizaciones",
+        "type": "list",
+        "ai": "Extrae TODAS las filas de la tabla de cotizaciones como array. Cada entrada tiene: periodo (formato MM-YYYY), tipo (\"normal\" si es COTIZACION NORMAL pagada por empleador, \"independiente\" si es COT. NORMAL AFIL. INDEPENDIENTE pagada por el afiliado), monto (monto en pesos como número entero sin separadores), rut_pagador (RUT del pagador). Si un período tiene múltiples entradas (ej: normal + independiente), incluye ambas como filas separadas.",
+        "internal": true
+      }
+    ],
+    "howToObtain": {
+      "steps": [
+        "Ingresa a <a href='https://www.previred.com' target='_blank' rel='noopener'>www.previred.com</a>",
+        "Haz clic en <b>Trabajador</b> y luego <b>Certificados</b>",
+        "Inicia sesión con tu ClaveÚnica",
+        "Selecciona el período requerido",
+        "Descarga el certificado en formato PDF"
+      ],
+      "tips": [
+        "El certificado muestra las últimas 12 cotizaciones",
+        "Puedes filtrar por empleador si tienes varios"
+      ]
+    }
+  },
+  "liquidaciones-sueldo": {
+    "label": "Liquidaciones de Sueldo",
+    "shortLabel": "LiqSueldo",
+    "disambiguator": "empleador",
+    "source": "Empleador",
+    "category": "ingresos",
+    "freq": "monthly",
+    "count": 6,
+    "pageAtomic": true,
+    "extractScope": "firstPage",
+    "graceDays": 10,
+    "definition": "Liquidación de sueldo mensual de un trabajador dependiente. Emitida por el empleador. Secciones: haberes (sueldo base, gratificación, bonos) y descuentos (AFP, salud, cesantía, impuesto). Muestra total haberes, total descuentos y sueldo líquido. Indica nombre, RUT, cargo, período mes/año. NO es certificado de antigüedad laboral. NO es contrato de trabajo. NO es cotización AFP.",
+    "dateHint": "Usa el mes/año del PERÍODO de la liquidación (ej: 'Período: Junio 2025' → 2025-06-01), NO la fecha de emisión, fecha de pago ni fecha de depósito",
+    "fields": [
+      {
+        "key": "empleador",
+        "type": "string",
+        "ai": "Extrae el nombre de la empresa empleadora tal como aparece en el encabezado o membrete del documento. No es el nombre del trabajador.",
+        "internal": true
+      },
+      {
+        "key": "nombre",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "rut",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "periodo",
+        "type": "month",
+        "internal": true
+      },
+      {
+        "key": "dias_trabajados",
+        "type": "num",
+        "internal": true
+      },
+      {
+        "key": "fecha_ingreso",
+        "type": "date",
+        "internal": true
+      },
+      {
+        "key": "cargo",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "institucion_previsional",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "institucion_salud",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "base_imponible",
+        "type": "num",
+        "internal": true
+      },
+      {
+        "key": "base_tributable",
+        "type": "num",
+        "ai": "Base sobre la cual se calcula el Impuesto Único de Segunda Categoría. Si la liquidación imprime una línea explícita 'Base Tributable' o 'Total Tributable', úsala. Si no aparece esa línea explícita, devuelve EL MISMO VALOR que base_imponible. NUNCA devuelvas null y NUNCA restes los descuentos previsionales — el cálculo legal lo hace el sistema downstream.",
+        "internal": true
+      },
+      {
+        "key": "haberes",
+        "type": "list",
+        "ai": "Extrae SOLO las filas ATÓMICAS de haberes/ingresos como array de {label, value}. Incluye haberes imponibles Y no imponibles (colación, movilización). Usa el nombre exacto del documento (ej: 'Sueldo Base', 'Gratificación Legal', 'Bono Responsabilidad', 'Horas Extras', 'Colación', 'Movilización'). value es el monto numérico entero (sin separador de miles). NUNCA incluyas filas de total/subtotal/control/agregado/base de cálculo. Ejemplos PROHIBIDOS: 'Total Imponible', 'Total No Imponible', 'Total Haberes', 'Sub Total', 'Base Imponible', 'Base Tributable', 'Total Imponibles', 'Total No Imponibles', 'Total Bruto', 'Líquido a Pagar', 'Alcance Líquido', 'Sueldo Líquido', 'Total a Pagar'. Si una fila resume otras filas ya extraídas, OMÍTELA — el sistema downstream calcula totales por sí mismo.",
+        "internal": true
+      },
+      {
+        "key": "descuentos",
+        "type": "list",
+        "ai": "Extrae SOLO las filas ATÓMICAS de descuentos como array de {label, value}. Incluye AFP, salud, cesantía, impuesto único, anticipos, cuotas, préstamos, seguros voluntarios, etc. Usa el nombre exacto del documento. value es el monto numérico entero (sin separador de miles). NUNCA incluyas filas de total/subtotal/control/agregado. Ejemplos PROHIBIDOS: 'Total Leyes Soc.', 'Total Descuentos', 'Total Descuentos Legales', 'Descuentos Legales', 'Descto. Legales', 'Total Otros Descuentos', 'Total Imposiciones', 'Suma Descuentos', 'Total Descuentos Voluntarios'. Si una fila resume AFP+salud+cesantía o cualquier otro grupo de descuentos ya extraídos como filas separadas, OMÍTELA — el sistema downstream suma por sí mismo.",
+        "internal": true
+      }
+    ],
+    "howToObtain": {
+      "steps": [
+        "Solicita tu liquidación a tu empleador o al área de RRHH",
+        "Si tu empresa usa portal de empleados, descárgala desde ahí",
+        "Asegúrate que muestre: nombre, RUT, sueldo bruto, descuentos y líquido"
+      ],
+      "tips": [
+        "Las liquidaciones deben ser de los últimos 3-6 meses según se solicite",
+        "Si no tienes acceso digital, toma una foto clara del documento"
+      ]
+    }
+  },
+  "resumen-boletas-sii": {
+    "label": "Boletas Honorarios Anual",
+    "shortLabel": "Boletas",
+    "source": "SII",
+    "category": "ingresos",
+    "freq": "annual",
+    "count": 2,
+    "graceDays": 90,
+    "definition": "Resumen anual de boletas de honorarios emitidas o recibidas por un contribuyente. Incluye el 'INFORME ANUAL DE BOLETAS DE HONORARIOS ELECTRONICAS' del SII (tabla mensual con folios, honorario bruto, retención y total líquido), así como secciones de boletas de honorarios extraídas de la carpeta tributaria del SII (tablas de BHE emitidas, BHE recibidas, o BTE con columnas de períodos, honorario bruto, retención y total líquido). Si el documento contiene tablas de boletas de honorarios con encabezados como 'Períodos', 'Honorario bruto', 'Retención', 'Total Líquido', clasificar como resumen-boletas-sii aunque la tabla esté vacía o diga 'No registra información'. NO es Formulario 22 ni Declaración Anual de Impuestos: si no aparece título 'IMPUESTOS ANUALES A LA RENTA' o 'FORM. 22', no usar declaracion-anual-impuestos.",
+    "dateHint": "Usa el AÑO TRIBUTARIO del resumen, NO la fecha de consulta o descarga. Ejemplos: 'INFORME CORRESPONDIENTE AL AÑO 2024' → 2024-01-01; 'resumen del año 2024' → 2024-01-01.",
+    "fields": [
+      {
+        "key": "rut",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "contribuyente",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "año",
+        "type": "num",
+        "internal": true
+      },
+      {
+        "key": "totales.boletas_vigentes",
+        "type": "num",
+        "internal": true
+      },
+      {
+        "key": "totales.boletas_anuladas",
+        "type": "num",
+        "internal": true
+      },
+      {
+        "key": "totales.honorario_bruto",
+        "type": "num",
+        "internal": true
+      },
+      {
+        "key": "totales.retencion_terceros",
+        "type": "num",
+        "internal": true
+      },
+      {
+        "key": "totales.retencion_contribuyente",
+        "type": "num",
+        "internal": true
+      },
+      {
+        "key": "totales.total_liquido",
+        "type": "num"
+      },
+      {
+        "key": "meses",
+        "type": "obj",
+        "ai": "Extrae el desglose mensual como objeto donde cada clave es el mes (enero, febrero, etc.) con boletas_vigentes, honorario_bruto, retencion y liquido",
+        "internal": true
+      }
+    ],
+    "howToObtain": {
+      "steps": [
+        "Ingresa a <a href='https://www.sii.cl' target='_blank' rel='noopener'>www.sii.cl</a>",
+        "Haz clic en <b>Servicios Online</b>",
+        "Selecciona <b>Boletas de honorarios electrónicas</b>",
+        "Entra a <b>Emisor de boleta de honorarios</b>",
+        "Ve a <b>Consultas sobre boletas de honorarios electrónicas</b>",
+        "Haz clic en <b>Consultar boletas emitidas</b>",
+        "Selecciona por mes o selecciona todo el año para obtener el informe anual"
+      ],
+      "tips": [
+        "Para el informe anual, selecciona el año completo en lugar de mes a mes",
+        "Descarga el resumen en PDF para subirlo"
+      ]
+    }
+  },
+  "balance-anual": {
+    "label": "Balance Anual",
+    "shortLabel": "Balance",
+    "source": "SII",
+    "category": "tributario",
+    "freq": "annual",
+    "count": 2,
+    "graceDays": 90,
+    "definition": "Balance tributario anual descargado del SII (sii.cl). Documento simple con resumen de ingresos y egresos por año tributario. Tiene formato de tabla simple del SII, NO tiene 8 columnas contables. NO es el Balance General preparado por el contador de la empresa.",
+    "dateHint": "Usa el AÑO CONTABLE del balance (ej: balance 2024 → 2024-01-01), NO la fecha de emisión o firma",
+    "fields": [
+      {
+        "key": "empresa",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "year",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "ingresos",
+        "type": "num",
+        "internal": true
+      },
+      {
+        "key": "egresos",
+        "type": "num",
+        "internal": true
+      }
+    ]
+  },
+  "declaracion-anual-impuestos": {
+    "label": "Decl. Anual Impuestos DAI",
+    "shortLabel": "DAI",
+    "source": "SII",
+    "category": "tributario",
+    "freq": "annual",
+    "count": 2,
+    "graceDays": 90,
+    "definition": "Formulario 22 (F22) del SII — Declaración Anual de Impuestos a la Renta. Documento oficial que resume las rentas, créditos e impuestos del contribuyente para un año tributario. Requiere título visible 'IMPUESTOS ANUALES A LA RENTA' o 'FORM. 22'. Cada campo tiene un número de código asociado que aparece dentro de un recuadro (cuadro) de color naranja/salmón. NO son DAI las páginas de boletas de honorarios, Formulario 29, tablas mensuales de IVA, ni extractos SII sin encabezado F22.",
+    "dateHint": "Usa el AÑO TRIBUTARIO del formulario (ej: 'Año Tributario 2024' → 2024-01-01), NO la fecha de presentación",
+    "display_codes": [
+      "547",
+      "110",
+      "104",
+      "105",
+      "161",
+      "170"
+    ],
+    "fields": [
+      {
+        "key": "rut",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "nombre",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "año_tributario",
+        "type": "num",
+        "ai": "Año tributario del formulario (ej: 2024). Aparece en el encabezado como 'AÑO TRIBUTARIO 2024'",
+        "internal": true
+      },
+      {
+        "key": "codes",
+        "type": "object",
+        "ai": "Extrae los valores numéricos de los siguientes códigos F22. Los códigos aparecen dentro de recuadros (cuadros) de color naranja o salmón a la izquierda de cada fila del formulario. Busca cada código y devuelve su valor como número entero, o null si el código no aparece en el documento. Códigos a extraer: 547 (Total Ingresos Brutos, Recuadro N°1), 110 (Honorarios y rem. directores S.A., art. 42 N°2 y 48), 104 (Retiros o remesas afectos al IGC o IA), 105 (Dividendos afectos al IGC o IA), 155 (Rentas de capitales mobiliarios, art. 20 N°2), 161 (Sueldos, pensiones y otras rentas similares, art. 42 N°1), 170 (Base Imponible Anual de IUSC o IGC), 305 (Resultado Liquidación Anual Impuesto a la Renta — puede ser negativo). Devuelve: { \"547\": valor_o_null, \"110\": valor_o_null, ... }"
+      }
+    ],
+    "howToObtain": {
+      "steps": [
+        "Ingresa a <a href='https://www.sii.cl' target='_blank' rel='noopener'>www.sii.cl</a>",
+        "Haz clic en <b>Servicios Online</b> → <b>Declaración de Renta</b>",
+        "Inicia sesión con tu ClaveÚnica o Clave SII",
+        "Selecciona <b>Consulta y Seguimiento</b> → <b>Consultar Estado de Declaración</b>",
+        "Selecciona el año tributario y descarga el PDF (Formulario 22 Compacto)"
+      ],
+      "tips": [
+        "El F22 corresponde a las rentas del año anterior al tributario (ej: AT 2024 = rentas de 2023)",
+        "También se puede obtener desde la Carpeta Tributaria, pero este documento es la declaración individual"
+      ]
+    }
+  },
+  "balance-general": {
+    "label": "Balance General",
+    "shortLabel": "Balance Gral",
+    "source": "Contador / Empresa",
+    "category": "tributario",
+    "freq": "annual",
+    "count": 1,
+    "graceDays": 90,
+    "multiInstance": true,
+    "definition": "Balance General (8 columnas) preparado por el contador de la empresa. Documento contable con estructura de 8 columnas: Sumas débitos/créditos, Saldos deudores/acreedores, Inventario activo/pasivo, y Resultado pérdidas/ganancias. Se identifica por el título 'Balance general' o 'Balance General', la estructura de 8 columnas, y cuentas contables numeradas (ej: 1100, 2100, 3100). NO es el balance tributario simple del SII. NO confundir con estados financieros auditados (IFRS/NIIF) ni con declaraciones de renta (F22).",
+    "dateHint": "Usa el período final del balance (ej: 'De Enero 2024 a Diciembre 2024' → 2024-12-01)",
+    "fields": [
+      {
+        "key": "empresa",
+        "type": "string",
+        "internal": true,
+        "ai": "Razón social de la empresa tal como aparece en el encabezado del balance"
+      },
+      {
+        "key": "rut",
+        "type": "string",
+        "internal": true,
+        "ai": "RUT de la empresa (con guión y dígito verificador, sin puntos)"
+      },
+      {
+        "key": "periodo",
+        "type": "string",
+        "internal": true,
+        "ai": "Período del balance tal como aparece (ej: 'Enero 2024 a Diciembre 2024')"
+      },
+      {
+        "key": "from_date",
+        "type": "date",
+        "internal": true,
+        "ai": "Fecha de inicio del período del balance en formato YYYY-MM-DD (ej: si dice 'De Enero 2024' → 2024-01-01)"
+      },
+      {
+        "key": "to_date",
+        "type": "date",
+        "internal": true,
+        "ai": "Fecha de término del período del balance en formato YYYY-MM-DD (ej: si dice 'a Diciembre 2024' → 2024-12-01)"
+      },
+      {
+        "key": "total_activos",
+        "type": "num",
+        "internal": true,
+        "ai": "Total Inventario Activo (última fila, columna 'Inventario activo'). Usar el valor final ajustado (después de pérdida/utilidad)"
+      },
+      {
+        "key": "total_pasivos",
+        "type": "num",
+        "internal": true,
+        "ai": "Total Inventario Pasivo (última fila, columna 'Inventario pasivo'). Usar el valor final ajustado"
+      },
+      {
+        "key": "patrimonio",
+        "type": "num",
+        "internal": true,
+        "ai": "Suma de cuentas de patrimonio (cuentas 23xx): Capital + Revalorización Capital Propio + Pérdidas y Ganancias acumuladas, de la columna 'Inventario pasivo' o 'Saldos acreedores'"
+      },
+      {
+        "key": "total_ingresos",
+        "type": "num",
+        "internal": true,
+        "ai": "Total Resultado Ganancias (última fila antes del ajuste, columna 'Resultado ganancias')"
+      },
+      {
+        "key": "total_gastos",
+        "type": "num",
+        "internal": true,
+        "ai": "Total Resultado Pérdidas (última fila antes del ajuste, columna 'Resultado pérdidas')"
+      },
+      {
+        "key": "resultado",
+        "type": "num",
+        "internal": true,
+        "ai": "Resultado del ejercicio: ganancias - pérdidas. Positivo = utilidad, negativo = pérdida. Ej: si Ganancias=1.543.777 y Pérdidas=4.610.482 → resultado = -3.066.705"
+      }
+    ]
+  },
+  "carpeta-tributaria": {
+    "label": "Carpeta Tributaria",
+    "shortLabel": "Carpeta",
+    "source": "SII",
+    "category": "tributario",
+    "freq": "once",
+    "count": 1,
+    "contains": [
+      "declaracion-anual-impuestos",
+      "resumen-boletas-sii"
+    ],
+    "definition": "Carpeta Tributaria Electrónica del SII. Documento MULTI-PÁGINA: varios informes tributarios en un solo PDF. Logo oficial SII en encabezado. Título 'CARPETA TRIBUTARIA ELECTRÓNICA'. Secciones: datos del contribuyente, actividades económicas, socios, Declaraciones de Renta (F22) de varios años, tablas de Boletas de Honorarios. Es un PAQUETE de documentos. NO confundir con un F22 suelto (ese es declaracion-anual-impuestos). NO confundir con informe de boletas suelto (ese es resumen-boletas-sii). La carpeta CONTIENE ambos dentro.",
+    "fields": [
+      {
+        "key": "rut",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "nombre",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "actividades",
+        "type": "list",
+        "ai": "Extrae todas las actividades económicas del contribuyente como array de strings",
+        "internal": true
+      },
+      {
+        "key": "socios",
+        "type": "list",
+        "ai": "Extrae los socios de la empresa incluyendo nombre, RUT y porcentaje de participación de cada uno",
+        "internal": true
+      },
+      {
+        "key": "declaraciones_renta",
+        "type": "list",
+        "ai": "Extrae TODAS las Declaraciones de Renta (Formulario 22) del documento como array. Los códigos F22 aparecen dentro de recuadros (cuadros) de color naranja o salmón a la izquierda de cada fila. Cada entrada tiene: año_tributario (número, ej: 2025), codes (objeto con los valores de los siguientes códigos — devuelve null si el código no aparece): 547 (Total Ingresos Brutos, Recuadro N°1), 110 (Honorarios y rem. directores S.A., art. 42 N°2 y 48), 104 (Retiros o remesas afectos al IGC o IA), 105 (Dividendos afectos al IGC o IA), 155 (Rentas de capitales mobiliarios, art. 20 N°2), 161 (Sueldos, pensiones y otras rentas similares, art. 42 N°1), 170 (Base Imponible Anual de IUSC o IGC), 305 (Resultado Liquidación Anual — puede ser negativo). Formato: { año_tributario: 2024, codes: { \"547\": valor_o_null, \"110\": valor_o_null, ... } }. Busca en la sección 'Declaraciones de Renta - Formulario 22 (F22)' del documento.",
+        "internal": true
+      },
+      {
+        "key": "domicilio",
+        "type": "string",
+        "internal": true,
+        "ai": "Valor literal y completo del campo etiquetado 'Domicilio:' que aparece en la sección 'Datos del Contribuyente' de la página 1. Es UNA sola línea de texto (ej: 'CAMINO DE LAS LIEBRES 1408 , LO BARNECHEA'). Devuelve EXACTAMENTE lo que dice esa línea, sin separar ni reformatear: calle, número, comuna y (si aparece) región como vienen en el PDF. PROHIBIDO inventar a partir de otras secciones: la sección 'Propiedades y Bienes Raíces Registrados en el SII' lista inmuebles con columnas 'Dirección' y 'Comuna' — esas NO son el domicilio del contribuyente. Tampoco uses direcciones de socios, sucursales, actividades económicas ni representantes legales. Si el campo 'Domicilio:' de 'Datos del Contribuyente' no existe o está vacío, devuelve null — no rellenes con bienes raíces."
+      }
+    ],
+    "howToObtain": {
+      "steps": [
+        "Ingresa a <a href='https://www.sii.cl' target='_blank' rel='noopener'>www.sii.cl</a>",
+        "Haz clic en <b>Servicios Online</b> → <b>Situación Tributaria</b>",
+        "Inicia sesión con tu ClaveÚnica o Clave SII",
+        "Selecciona <b>Obtener Carpeta Tributaria Electrónica</b>",
+        "Elige <b>Para Trámites</b> (o la opción que corresponda)",
+        "Descarga el PDF generado"
+      ],
+      "tips": [
+        "La carpeta incluye información de los últimos 3 años tributarios",
+        "Tiene validez de 30 días desde su emisión"
+      ]
+    }
+  },
+  "cartola-banco": {
+    "label": "Cartola Bancaria",
+    "shortLabel": "Cartola",
+    "disambiguator": "entidad",
+    "source": "Banco",
+    "category": "respaldos",
+    "multiInstance": true,
+    "definition": "Cartola o resumen bancario de un banco chileno. Incluye cartola histórica de cuenta corriente/vista con movimientos del período (cargos, abonos, saldos), título 'Cartola Histórica', 'Estado de Cuenta Bancaria' o 'Movimientos Cuenta Corriente'. También puede ser una posición consolidada solo cuando muestra productos de forma general sin detalle suficiente para clasificar una deuda específica. NO es un estado de cuenta de tarjeta de crédito con número de tarjeta, CAE, monto facturado, pago mínimo o compras en cuotas (eso es deuda-consumo). NO es una pantalla/certificado/detalle de créditos con número de crédito, saldo, cuota, vencimiento o deuda vigente (eso es deuda-consumo, deuda-hipotecaria o deuda-comercial según el producto). NO es informe de la CMF (informe-deuda).",
+    "dateHint": "Usa el período de la cartola (mes/año del estado de cuenta), no la fecha de emisión ni la fecha de descarga",
+    "fields": [
+      {
+        "key": "entidad",
+        "type": "string",
+        "internal": true,
+        "ai": "Nombre del banco emisor. Extraer del logo, encabezado o pie de página. Ej: 'Banco Itaú Chile', 'BCI', 'Santander Chile'"
+      },
+      {
+        "key": "titular",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "numero_cuenta",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "periodo",
+        "type": "string",
+        "internal": true,
+        "ai": "Período del estado de cuenta en formato 'MM-YYYY' o rango 'DD-MM-YYYY a DD-MM-YYYY'"
+      },
+      {
+        "key": "saldo_final",
+        "type": "num",
+        "internal": true
+      }
+    ]
+  },
+  "contrato-arriendo": {
+    "label": "Contrato Arriendo",
+    "shortLabel": "Arriendo",
+    "disambiguator": "direccion_propiedad",
+    "source": "Notaría / Partes",
+    "category": "ingresos",
+    "multiInstance": true,
+    "definition": "Contrato de arriendo de propiedad inmueble (notarial o privado con firma ante notario) suscrito entre arrendador y arrendatario. No involucra venta de propiedad — es uso temporal, no transferencia de dominio. Se identifica por contener: una dirección de la propiedad arrendada, el valor mensual del arriendo expresado en pesos (CLP) o en Unidades de Fomento (UF), y los RUTs y nombres del arrendador y del arrendatario. Puede incluir cláusulas sobre plazo, reajuste UF, mes de garantía, uso del inmueble y prohibición de subarriendo. En contratos notariales los montos suelen estar escritos en palabras. NO clasificar como contrato-arriendo: contratos de trabajo, contratos de mutuo, promesas de compraventa ni escrituras de compraventa ya inscritas.",
+    "dateHint": "Usa la fecha de inicio del arriendo (fecha de entrega del inmueble) como docdate. Si no aparece, usa la fecha de firma del contrato.",
+    "fields": [
+      {
+        "key": "partes",
+        "type": "list",
+        "internal": true,
+        "ai": "Extrae todas las partes del contrato como array. Cada entrada tiene: nombre (nombre completo), rut (RUT si aparece), rol ('arrendador' o 'arrendatario')."
+      },
+      {
+        "key": "direccion_propiedad",
+        "type": "string",
+        "internal": true,
+        "ai": "Dirección completa de la propiedad arrendada incluyendo número, piso/depto si aplica, y comuna. Ej: 'Av. Providencia 1234, Depto 502, Providencia'."
+      },
+      {
+        "key": "valor_mensual",
+        "type": "num",
+        "internal": true,
+        "ai": "Valor mensual del arriendo en pesos chilenos (CLP). En contratos notariales puede estar escrito en palabras — convierte a número entero. Si el valor está en UF, deja este campo null y usa valor_mensual_uf."
+      },
+      {
+        "key": "valor_mensual_uf",
+        "type": "num",
+        "internal": true,
+        "ai": "Valor mensual del arriendo en Unidades de Fomento (UF). Solo si el contrato especifica el canon en UF. Convierte palabras a número decimal."
+      },
+      {
+        "key": "fecha_inicio",
+        "type": "date",
+        "internal": true,
+        "ai": "Fecha de inicio del arriendo o de entrega del inmueble. Formato YYYY-MM-DD."
+      },
+      {
+        "key": "fecha_termino",
+        "type": "date",
+        "internal": true,
+        "ai": "Fecha de término o vencimiento del contrato de arriendo. null si es indefinido o de plazo automáticamente renovable sin fecha fija."
+      },
+      {
+        "key": "fecha_firma",
+        "type": "date",
+        "internal": true
+      },
+      {
+        "key": "notaria",
+        "type": "string",
+        "internal": true,
+        "ai": "Nombre de la notaría donde se otorgó o autorizó el contrato. null si es privado sin notarización."
+      },
+      {
+        "key": "repertorio",
+        "type": "string",
+        "internal": true,
+        "ai": "Número de repertorio notarial. Buscar 'Repertorio N°', 'Rep. N°', o similar. null si no está notarializado."
+      }
+    ]
+  },
+  "deuda-comercial": {
+    "label": "Deuda Comercial",
+    "shortLabel": "Comercial",
+    "disambiguator": "entidad",
+    "source": "Banco",
+    "category": "deudas",
+    "multiInstance": true,
+    "definition": "Deuda comercial, línea de crédito o crédito empresarial vigente — documento de UN SOLO crédito comercial específico. Préstamo a nombre de empresa o persona natural con giro comercial. Incluye certificado de deuda comercial, estado de línea de crédito o detalle de crédito del portal bancario. Puede ser impresión de pantalla del sitio web del banco. Si la pantalla muestra MÚLTIPLES productos (consumo + hipotecario + tarjetas + líneas de crédito juntos), NO es deuda-comercial sino cartola-banco. NO es crédito de consumo personal (deuda-consumo). NO es crédito hipotecario (deuda-hipotecaria). NO es informe de deuda CMF.",
+    "fields": [
+      {
+        "key": "entidad",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "operacion",
+        "type": "string",
+        "ai": "Identificador único del crédito (número de operación, número de crédito, o código único asignado por el banco). Una persona puede tener múltiples créditos en el mismo banco, cada uno con su propio identificador.",
+        "internal": true
+      },
+      {
+        "key": "moneda",
+        "type": "string",
+        "ai": "Moneda del crédito: 'UF' o 'CLP'. Buscar campo 'Moneda' en el documento. Si no se indica, asumir CLP.",
+        "internal": true
+      },
+      {
+        "key": "tipo",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "monto",
+        "type": "num",
+        "ai": "Monto original del crédito como número decimal. En formato chileno el punto (.) separa miles y la coma (,) separa decimales: '6.458,0000' = 6458.0. Si el documento está en UF, extraer el valor en UF.",
+        "internal": true
+      },
+      {
+        "key": "cuota_mensual",
+        "type": "num",
+        "ai": "Cuota mensual como número decimal. En formato chileno '28,9000' = 28.9. Si el documento está en UF, extraer el valor en UF.",
+        "internal": true
+      },
+      {
+        "key": "saldo_insoluto",
+        "type": "num",
+        "ai": "Saldo insoluto como número decimal. En formato chileno '4.643,8549' = 4643.8549. Si el documento está en UF, extraer el valor en UF.",
+        "internal": true
+      },
+      {
+        "key": "cuotas_pagadas",
+        "type": "num",
+        "ai": "Número de cuotas ya pagadas/canceladas.",
+        "internal": true
+      },
+      {
+        "key": "cuotas_totales",
+        "type": "num",
+        "ai": "Número total de cuotas del crédito.",
+        "internal": true
+      },
+      {
+        "key": "caev",
+        "type": "num",
+        "internal": true
+      }
+    ]
+  },
+  "deuda-consumo": {
+    "label": "Crédito de Consumo",
+    "shortLabel": "Consumo",
+    "disambiguator": "entidad",
+    "source": "Banco",
+    "category": "deudas",
+    "freq": "once",
+    "count": 1,
+    "multiInstance": true,
+    "definition": "Crédito de consumo vigente o deuda de tarjeta de crédito. Incluye certificado de deuda, tabla de amortización, detalle de crédito, estado de cuenta de tarjeta o pantallazo del portal bancario con número de crédito/tarjeta, monto, saldo, cuotas, CAE, monto facturado, pago mínimo o vencimiento. Puede ser impresión de pantalla del sitio web del banco. Si una pantalla muestra varios productos pero contiene una fila/sección clara de crédito de consumo o tarjeta con saldo/vencimiento, clasificar esa evidencia como deuda-consumo antes que cartola-banco. NO es crédito hipotecario (deuda-hipotecaria). NO es informe de deuda CMF (informe-deuda). NO es deuda comercial (deuda-comercial). RECHAZAR comprobantes/vouchers de transacción individual (pago, transferencia, abono) que muestran UN SOLO evento sin saldo total, cuotas, CAE, vencimiento ni monto facturado. Devolver documents:[].",
+    "fields": [
+      {
+        "key": "entidad",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "numero_credito",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "descripcion",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "tipo",
+        "type": "string",
+        "ai": "D=Directo, I=Indirecto",
+        "internal": true
+      },
+      {
+        "key": "monto",
+        "type": "num",
+        "internal": true
+      },
+      {
+        "key": "saldo",
+        "type": "num",
+        "internal": true
+      },
+      {
+        "key": "cuota",
+        "type": "num"
+      },
+      {
+        "key": "vencimiento",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "cuotas_pagadas",
+        "type": "num"
+      },
+      {
+        "key": "cuotas_totales",
+        "type": "num"
+      }
+    ]
+  },
+  "deuda-hipotecaria": {
+    "label": "Deuda Hipotecaria",
+    "shortLabel": "Hipo",
+    "disambiguator": "entidad",
+    "source": "Banco",
+    "category": "deudas",
+    "freq": "once",
+    "count": 1,
+    "multiInstance": true,
+    "definition": "Crédito hipotecario o mutuario vigente — documento de UN SOLO crédito hipotecario específico. Incluye certificado de deuda hipotecaria, tabla de amortización, aviso de dividendo o detalle de crédito del portal bancario con banco emisor, número de operación, saldo, dividendo, cuotas o vencimiento. Puede ser impresión de pantalla del sitio web del banco. NO clasificar como deuda-hipotecaria una página interior de escritura, mutuo, compraventa o cláusula notarial que solo menciona tasa, dividendos o condiciones del crédito sin ser un documento bancario independiente. Si la pantalla muestra MÚLTIPLES productos (consumo + hipotecario + tarjetas + líneas de crédito juntos), usar deuda-hipotecaria solo si el producto hipotecario tiene datos claros de saldo/operación; de lo contrario preferir cartola-banco o no-clasificado.",
+    "fields": [
+      {
+        "key": "entidad",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "operacion",
+        "type": "string",
+        "ai": "Identificador único del crédito (número de operación, número de crédito, o código único asignado por el banco). Una persona puede tener múltiples créditos en el mismo banco, cada uno con su propio identificador.",
+        "internal": true
+      },
+      {
+        "key": "moneda",
+        "type": "string",
+        "ai": "Moneda del crédito: 'UF' o 'CLP'. Buscar campo 'Moneda' en el documento. Si no se indica, asumir CLP.",
+        "internal": true
+      },
+      {
+        "key": "monto_credito",
+        "type": "num",
+        "ai": "Monto original del crédito como número decimal. IMPORTANTE: en formato chileno el punto (.) separa miles y la coma (,) separa decimales. Ejemplo: '6.458,0000' = 6458.0 — no 64580000. Si el documento está en UF, extraer el valor en UF (ej: 6458.0).",
+        "internal": true
+      },
+      {
+        "key": "cuota_mensual",
+        "type": "num",
+        "ai": "Dividendo o cuota mensual como número decimal. IMPORTANTE: en formato chileno '28,9000' = 28.9 — no 289000. En avisos de pago hipotecario buscar en 'DIVIDENDO' (incluye amortización + interés + comisión) o en 'TOTAL DEL MES' (dividendo + seguros). Si el documento está en UF, extraer el valor en UF.",
+        "internal": true
+      },
+      {
+        "key": "saldo_insoluto",
+        "type": "num",
+        "ai": "Saldo insoluto (deuda pendiente) como número decimal. IMPORTANTE: en formato chileno '4.643,8549' = 4643.8549 — no 46438549. Si el documento está en UF, extraer el valor en UF.",
+        "internal": true
+      },
+      {
+        "key": "tasa_interes",
+        "type": "num",
+        "ai": "Tasa de interés como porcentaje decimal. Ejemplo: '8,3179' = 8.3179 (no 83179).",
+        "internal": true
+      },
+      {
+        "key": "cuotas_pagadas",
+        "type": "num",
+        "ai": "Número de cuotas o dividendos ya pagados/cancelados (ej: 'Cancelados 111 de 300' → 111).",
+        "internal": true
+      },
+      {
+        "key": "cuotas_totales",
+        "type": "num",
+        "ai": "Número total de cuotas o dividendos del crédito (ej: 'Cancelados 111 de 300' → 300).",
+        "internal": true
+      },
+      {
+        "key": "caev",
+        "type": "num",
+        "internal": true
+      }
+    ]
+  },
+  "informe-deuda": {
+    "label": "Informe de Deuda CMF",
+    "shortLabel": "CMF",
+    "source": "CMF",
+    "category": "deudas",
+    "freq": "once",
+    "count": 1,
+    "definition": "Emitido EXCLUSIVAMENTE de la CMF (Comisión para el Mercado Financiero). Se identifica por el logo texto morado 'CMF', bajo este el título 'Informe de Deudas'. Luego una barra de progreso horizontal dividida en 4 con el estado de la deuda. Secciones 'Deuda Directa' y 'Créditos disponibles'. La página explicativa/glosario titulada 'Entendiendo mi Informe de Deuda' es opcional y forma parte del mismo informe CMF: puede aparecer o no aparecer; si aparece junto al informe debe quedar dentro del mismo rango, y si aparece sola por extracción previa sigue siendo evidencia de informe-deuda. RECHAZAR informes comerciales de empresas privadas (Maat, Equifax, Dicom, TransUnion etc.) y devolver documents:[] para estos. Si el informe abarca varias páginas (encabezado/resumen + tabla de Deuda Directa + Créditos disponibles + página explicativa opcional), trátalo como UN solo documento que cubre TODAS sus páginas. NUNCA emitir entradas separadas por página para un mismo informe CMF.",
+    "dateHint": "Usa la fecha del informe tal como aparece en el documento (fecha de consulta CMF)",
+    "fields": [
+      {
+        "key": "rut",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "nombre",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "deuda_total",
+        "type": "num",
+        "internal": true
+      },
+      {
+        "key": "fecha_informe",
+        "type": "date",
+        "ai": "Fecha de consulta del informe CMF impresa en el encabezado o pie del documento. Mismo valor que docdate. Formato YYYY-MM-DD.",
+        "internal": true
+      },
+      {
+        "key": "deudas",
+        "type": "list",
+        "ai": "Extrae SOLO las filas de la sección 'Deuda Directa' (deudas como titular). NO incluir filas de 'Créditos disponibles' ni 'Líneas de crédito' (esas son crédito disponible, no deuda). Cada entrada: entidad, tipo (Consumo/Vivienda/Comercial/Tarjeta de crédito/Línea de crédito/etc. tal como aparece), total_credito (columna 'Total del crédito'), vigente (columna 'Vigente'), atraso_30_59, atraso_60_89, atraso_90_mas. Si una institución aparece solo en 'Créditos disponibles' y NO en 'Deuda Directa', NO la incluyas",
+        "internal": true
+      },
+      {
+        "key": "deudas_indirectas",
+        "type": "list",
+        "ai": "Extrae TODAS las deudas de la tabla 'Deuda Indirecta' como array, donde cada entrada tiene: entidad, tipo, total_credito, vigente, atraso_30_59, atraso_60_89, atraso_90_mas. Si dice 'No registra información para esta sección' devuelve array vacío []",
+        "internal": true
+      },
+      {
+        "key": "lineas_credito",
+        "type": "list",
+        "ai": "Extrae TODAS las filas de 'Líneas de crédito' (bajo 'Créditos disponibles'). Cada fila: entidad (string, institución financiera), directos (num, monto columna Directos), indirectos (num, monto columna Indirectos). Si 'No registra información' → array vacío []",
+        "internal": true
+      },
+      {
+        "key": "otros_creditos",
+        "type": "list",
+        "ai": "Extrae TODAS las filas de 'Otros créditos' (bajo 'Créditos disponibles'). Cada fila: entidad (string, institución financiera), directos (num), indirectos (num). Si 'No registra información' → array vacío []",
+        "internal": true
+      }
+    ]
+  },
+  "informe-credito": {
+    "label": "Informe Comercial",
+    "shortLabel": "Deuda",
+    "source": "DICOM / Maat / Sinacofi / TransUnion / Regcheq",
+    "category": "deudas",
+    "freq": "once",
+    "count": 1,
+    "definition": "Informe comercial de bureaus de crédito o compliance chilenos. Incluye informes de DICOM/Equifax, Maat, Sinacofi, TransUnion, Destácame, ICAV, Regcheq. Se identifica por logos de estas entidades y secciones como 'Resumen de Morosidades', 'Protestos', 'Puntaje Score', 'Morosidad Vigente', o reportes de compliance/listas restrictivas (PEP, OFAC, GAFI). NO clasificar como informe-credito documentos de la CMF (Comisión para el Mercado Financiero) — esos son informe-deuda. RECHAZAR fragmentos de expedientes judiciales, listas de acreedores de procedimientos concursales (Liquidación Voluntaria/Forzosa Simplificada, SUPERIR), listas de juicios pendientes — incluso si listan instituciones financieras como acreedores. No son informes comerciales. Devolver documents:[].",
+    "dateHint": "Usa la fecha de elaboración o consulta del informe",
+    "fields": [
+      {
+        "key": "rut",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "nombre",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "fuente",
+        "type": "string",
+        "internal": true,
+        "ai": "Identifica el proveedor del informe: Maat, DICOM, Equifax, Sinacofi, TransUnion, Destácame, ICAV, Regcheq, u otro"
+      },
+      {
+        "key": "puntaje",
+        "type": "num",
+        "internal": true,
+        "ai": "Puntaje o score crediticio (ej: 'PUNTAJE SCORE MAAT', 'Score DICOM', etc.). Solo el número. null si no aparece"
+      },
+      {
+        "key": "morosidades_vigentes",
+        "type": "num",
+        "internal": true,
+        "ai": "Monto total de morosidades vigentes en pesos chilenos. Buscar 'TOTAL MOROSIDAD VIGENTE' o equivalente. Si es '-' o vacío, devolver 0. null si no aparece en el informe"
+      },
+      {
+        "key": "protestos_vigentes",
+        "type": "num",
+        "internal": true,
+        "ai": "Monto total de protestos vigentes en pesos chilenos. Buscar 'TOTAL PROTESTOS' o equivalente. Si es '-' o vacío, devolver 0. null si no aparece en el informe"
+      },
+      {
+        "key": "morosidad_previsional",
+        "type": "num",
+        "internal": true,
+        "ai": "Total morosidad previsional en pesos. 0 si es '-' o vacío. null si no aparece"
+      },
+      {
+        "key": "morosidad_laboral",
+        "type": "num",
+        "internal": true,
+        "ai": "Total morosidad laboral en pesos. 0 si es '-' o vacío. null si no aparece"
+      },
+      {
+        "key": "morosidad_comercio",
+        "type": "num",
+        "internal": true,
+        "ai": "Total morosidad comercio en pesos. 0 si es '-' o vacío. null si no aparece"
+      },
+      {
+        "key": "quiebras",
+        "type": "bool",
+        "internal": true,
+        "ai": "¿Tiene eventos de quiebra registrados? true/false. Buscar 'EVENTOS QUIEBRAS' o equivalente"
+      },
+      {
+        "key": "compliance_estado",
+        "type": "string",
+        "internal": true,
+        "ai": "Estado de compliance/listas restrictivas. Ej: 'Sin coincidencias', 'Con coincidencias en lista X', 'PEP', etc. null si el informe no incluye verificación de compliance"
+      },
+      {
+        "key": "protestos",
+        "type": "list",
+        "internal": true,
+        "ai": "Extrae el detalle de protestos como array. Cada entrada tiene: fecha, acreedor, tipo_documento, monto, numero_documento, tipo_credito. Array vacío si no hay protestos"
+      },
+      {
+        "key": "morosidades",
+        "type": "list",
+        "internal": true,
+        "ai": "Extrae el detalle de morosidades vigentes como array. Cada entrada tiene: fecha_vencimiento, tipo_credito, monto, acreedor. Array vacío si no hay morosidades"
+      }
+    ]
+  },
+  "avaluo-fiscal": {
+    "label": "Avalúo Fiscal",
+    "shortLabel": "Avalúo",
+    "source": "SII",
+    "category": "activos",
+    "freq": "once",
+    "count": 1,
+    "multiInstance": true,
+    "definition": "Certificado de Avalúo Fiscal emitido EXCLUSIVAMENTE por el SII (Servicio de Impuestos Internos). REQUISITOS OBLIGATORIOS para clasificar como avalúo fiscal: (1) Logo oficial del SII (Servicio de Impuestos Internos) en la esquina superior izquierda, (2) Título exacto 'CERTIFICADO DE AVALÚO FISCAL' en el encabezado. Si falta CUALQUIERA de estos dos elementos, NO es un avalúo fiscal. Puede contener múltiples propiedades, una por página. Cada página lista: Comuna, Número de ROL de Avalúo, Dirección, Destino del bien raíz, propietario registrado con RUN/RUT, porcentaje de derecho, y tabla de avalúos (AVALÚO TOTAL, AVALÚO EXENTO DE IMPUESTO, AVALÚO AFECTO A IMPUESTO). NO clasificar como avalúo fiscal: escrituras de compraventa, certificados de dominio, tasaciones comerciales, informes de propiedad de otras fuentes, ni ningún documento que no tenga el logo SII y el título exacto.",
+    "dateHint": "Usa la fecha de emisión del certificado",
+    "fields": [
+      {
+        "key": "propiedades",
+        "type": "list",
+        "ai": "Extrae TODAS las propiedades del certificado como array (una por página). Cada entrada tiene: rol (string, Número de ROL de Avalúo formato XXXXX-XXXXX), direccion (string, dirección completa), comuna (string), destino (string, ej: Habitacional, Estacionamiento, Bodega y Almacenaje, Comercial, Agrícola), nombre_registrado (string, nombre completo del propietario registrado), run_registrado (string, RUN o RUT registrado con dígito verificador), porcentaje_derecho (number, % de derecho como número ej: 100 para 100%), avaluo_total (number, avalúo total en pesos como entero sin separadores), avaluo_exento (number, avalúo exento de impuesto en pesos), avaluo_afecto (number, avalúo afecto a impuesto en pesos)"
+      }
+    ],
+    "howToObtain": {
+      "steps": [
+        "Ingresa a <a href='https://www.sii.cl' target='_blank' rel='noopener'>www.sii.cl</a>",
+        "Haz clic en <b>Servicios Online</b> → <b>Avalúos y Contribuciones de Bienes Raíces</b>",
+        "Inicia sesión con tu ClaveÚnica o Clave SII",
+        "Selecciona <b>Consulta de Avalúo y Certificado</b>",
+        "Se listarán todas tus propiedades. Haz clic en <b>Certificado</b> para descargar el PDF"
+      ],
+      "tips": [
+        "El certificado incluye todas las propiedades registradas a tu nombre",
+        "Tiene validez de 30 días desde su emisión",
+        "El avalúo fiscal NO corresponde a una tasación comercial"
+      ]
+    }
+  },
+  "compraventa-propiedad": {
+    "label": "Compraventa de Propiedad",
+    "shortLabel": "VentaProp",
+    "disambiguator": "comuna",
+    "source": "Notaría",
+    "category": "activos",
+    "freq": "once",
+    "count": 1,
+    "multiInstance": true,
+    "definition": "Escritura de compraventa de propiedad inmueble. Documento notarial largo con cláusulas legales. Incluye copias fieles/certificadas electrónicas de una escritura pública que reproducen páginas de 'COMPRAVENTA', 'CONTRATO COMPRAVENTA', 'COMPRAVENTA MUTUO E HIPOTECA' o similares. Identifica comprador y vendedor con RUT. Describe el inmueble: dirección, comuna, deslindes, inscripción en CBR. Estipula precio de venta en CLP o UF. Firmado ante notario con número de repertorio. Una escritura larga puede contener mutuo, hipoteca, anexos, certificados, avalúos, tablas SII o referencias bancarias; si son parte de la copia notarial reproducida, mantener el rango como un solo compraventa-propiedad y NO partirlo en deuda-hipotecaria, avaluo-fiscal, resumen-boletas-sii u otros hijos. NO es contrato de arriendo (arriendo = uso temporal, compraventa = transferencia de dominio). NO es promesa de compraventa.",
+    "dateHint": "Usa la fecha de firma de la escritura ante notario",
+    "fields": [
+      {
+        "key": "comprador",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "vendedor",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "direccion",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "comuna",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "monto",
+        "type": "num",
+        "internal": true
+      }
+    ]
+  },
+  "cuenta-ahorro": {
+    "label": "Cuenta de Ahorro",
+    "shortLabel": "Ahorro",
+    "disambiguator": "banco",
+    "source": "Banco",
+    "category": "activos",
+    "multiInstance": true,
+    "definition": "Certificado o cartola de cuenta de ahorro bancaria. Título dice 'Cuenta de Ahorro', 'Ahorro Vivienda' o 'Libreta de Ahorro'. Muestra saldo, número de cuenta, titular. Emitido por banco chileno. NO es cartola de cuenta corriente ni cuenta vista (esas son cartola-banco). NO es depósito a plazo ni fondo mutuo (esos son inversiones).",
+    "fields": [
+      {
+        "key": "banco",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "tipo_cuenta",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "saldo",
+        "type": "num",
+        "internal": true
+      }
+    ]
+  },
+  "inversiones": {
+    "label": "Inversiones",
+    "shortLabel": "Inv",
+    "disambiguator": "banco",
+    "source": "Banco",
+    "category": "activos",
+    "multiInstance": true,
+    "definition": "Documento de inversiones bancarias o financieras. Incluye Depósitos a Plazo (DAP), certificados de depósito a plazo, consultas de depósito a plazo, fondos mutuos, custodia, cartera de inversiones y otros instrumentos de inversión emitidos por bancos o instituciones financieras. Palabras clave: 'Certificado de Depósitos a Plazo', 'Consulta Depósito a Plazo', 'DAP', 'Plazo Fijo', 'Total invertido', 'Monto Inicial', 'Monto Final', 'Interés al vencimiento'. NO es cuenta de ahorro (cuenta-ahorro). NO es cartola de cuenta corriente (cartola-banco). NO es certificado notarial, escritura pública, repertorio, fojas.cl, ni documento con título COMPRAVENTA; esos son compraventa-propiedad aunque el filename diga inversión.",
+    "fields": [
+      {
+        "key": "titular",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "banco",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "saldo",
+        "type": "num",
+        "internal": true,
+        "ai": "Monto total invertido. Para DAP: suma de todos los montos finales (capital + intereses). Si hay un resumen con 'Total invertido', usar ese valor."
+      },
+      {
+        "key": "depositos",
+        "type": "list",
+        "internal": true,
+        "ai": "Lista de depósitos o inversiones individuales. Cada item: {monto_inicial, monto_final, tasa, plazo_dias, fecha_inicio, fecha_vencimiento, tipo, moneda}. monto_inicial y monto_final son numéricos. tasa es porcentaje (ej: 0.27 para 0,27%). plazo_dias es número entero. tipo es el tipo de instrumento de inversión. Valores posibles: 'DAP' (Depósito a Plazo), 'Fondo Mutuo', 'APV' (Ahorro Previsional Voluntario), 'Fondo de Inversión', 'Seguro con Ahorro'. NO usar el tipo de tasa (Fijo/Renovable) como tipo. moneda es 'CLP', 'USD', 'UF', o 'EUR'."
+      }
+    ]
+  },
+  "padron": {
+    "label": "Padrón de Vehículo",
+    "shortLabel": "Padrón",
+    "disambiguator": "marca",
+    "source": "Registro Civil",
+    "category": "activos",
+    "freq": "once",
+    "count": 1,
+    "multiInstance": true,
+    "extractScope": "firstPage",
+    "definition": "Padrón de vehículo — certificado de inscripción de vehículo motorizado del Registro Civil chileno. Puede ser PDF oficial o foto del padrón físico (tarjeta plastificada tamaño carnet). Tiene Escudo de la República de Chile. Dice 'Certificado de Inscripción' en título o pie. Datos: placa patente, marca, modelo, año, color, motor, chasis, nombre y RUT propietario, tasación fiscal. NO es permiso de circulación. NO es revisión técnica. NO es SOAP.",
+    "fields": [
+      {
+        "key": "inscripcion",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "rut_propietario",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "propietario",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "domicilio",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "comuna",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "fecha_adquisicion",
+        "type": "date",
+        "internal": true
+      },
+      {
+        "key": "fecha_inscripcion",
+        "type": "date",
+        "internal": true
+      },
+      {
+        "key": "fecha_emision",
+        "type": "date",
+        "internal": true
+      },
+      {
+        "key": "marca",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "modelo",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "motor",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "chasis",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "color",
+        "type": "string",
+        "internal": true
+      },
+      {
+        "key": "tasacion_fiscal",
+        "type": "num",
+        "internal": true
+      },
+      {
+        "key": "año",
+        "type": "num"
+      }
+    ],
+    "derived": [
+      {
+        "key": "precio_mercado_clp",
+        "type": "num",
+        "input_fields": [
+          "marca",
+          "modelo",
+          "año"
+        ],
+        "prompt": "Eres un tasador de vehículos usados en Chile.\n\nVehículo: {{marca}} {{modelo}}, año {{año}}.\n\nBusca este vehículo ESPECÍFICO del año {{año}} en el mercado de usados chileno.\n\nReglas:\n- Busca precios de este modelo USADO del año {{año}}, NO el modelo nuevo actual.\n- Los precios publicados en portales (chileautos, yapo, mercadolibre) son precios de OFERTA, no de venta real. Estima el precio de transacción real (10-20% menos que el precio publicado).\n- Un vehículo del año {{año}} tiene aproximadamente {{__age__}} años de uso. Debe reflejar depreciación acorde.\n- Si no encuentras datos confiables para este modelo y año específico, responde: null\n\nResponde SOLO con JSON: {\"precio\": <número entero CLP o null>}",
+        "grounding": true
+      }
+    ]
+  }
+}

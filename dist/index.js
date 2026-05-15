@@ -38,6 +38,7 @@ ${isPdf ? `PDF range rules:
 - "start" and "end" are 1-indexed inclusive page ranges.
 - One physical/logical document gets one row spanning all its pages.
 - Multi-page certificates/reports/cards remain one row; do not split by page.
+- If a blank, near-blank, or scanner-artifact page appears immediately after a classified document and before any new visible document begins, include it in the previous document's range; no document starts on a blank page.
 - Multiple recurring instances, such as monthly liquidaciones or annual SII forms, get separate rows with disjoint ranges and their own docdate.
 - Do not return two different non-container doctypes for the exact same page range. Choose the one best supported by visible title/issuer/layout.
 - Container PDFs such as carpeta-tributaria return a single row whose page range covers the pages actually present in this upload when the upload presents as that container (visible title/cover/header or multiple consecutive container pages); do not emit child documents (F22, boletas, etc.) inside that container. Do not extrapolate the range beyond the last visible page (a 4-page extract of a carpeta is @1..4, not @1..12). A lone interior page without the container title/header should be classified by its visible standalone content.
@@ -109,6 +110,8 @@ function getDoctypes() {
 }
 var NO_CLASIFICADO = "no-clasificado";
 var DEFAULT_MODEL = "gemini-2.5-pro";
+var MAX_IMAGE_ONLY_CONTENT_BYTES = 256;
+var NEAR_BLANK_MONO_IMAGE_BYTES_PER_PIXEL = 5e-3;
 var DEFAULT_GENERATION_CONFIG = {
   temperature: 0,
   topP: 0.1,
@@ -121,14 +124,17 @@ async function classify(buffer, mimetype, opts = {}) {
   const types = opts.candidateIds?.length ? all.filter((d) => opts.candidateIds.includes(d.id)) : all;
   if (types.length === 0) return [];
   const isPdf = mimetype === "application/pdf";
-  const totalPages = isPdf ? await pageCount(buffer) : 1;
+  const pdf = isPdf ? await pdfInfo(buffer) : null;
+  const totalPages = pdf?.totalPages ?? 1;
   const raw = await aiCall(buffer, mimetype, types, isPdf);
   const merged = mergeDuplicates(raw);
   const resolved = resolveSameRangeConflicts(merged);
-  return isPdf ? fillGaps(resolved, totalPages) : resolved;
+  const blankAttached = pdf ? attachBlankPagesToPrevious(resolved, pdf.blankLikePages, totalPages) : resolved;
+  return isPdf ? fillGaps(blankAttached, totalPages) : resolved;
 }
-async function pageCount(buf) {
-  return (await pdfLib.PDFDocument.load(Uint8Array.from(buf), { ignoreEncryption: true })).getPageCount();
+async function pdfInfo(buf) {
+  const doc = await pdfLib.PDFDocument.load(Uint8Array.from(buf), { ignoreEncryption: true });
+  return { totalPages: doc.getPageCount(), blankLikePages: blankLikePages(doc) };
 }
 function buildResponseSchema(ids, isPdf) {
   const itemProps = {
@@ -216,6 +222,85 @@ function fillGaps(segs, totalPages) {
     }
   }
   return [...segs, ...gaps].sort(sortSegments);
+}
+function attachBlankPagesToPrevious(segs, blankPages, totalPages) {
+  if (!blankPages.size || !segs.length) return segs;
+  const out = segs.map((s) => ({ ...s }));
+  const covered = /* @__PURE__ */ new Set();
+  for (const s of out) {
+    if (s.start == null || s.end == null) continue;
+    for (let p = s.start; p <= s.end; p++) covered.add(p);
+  }
+  for (let p = 1; p <= totalPages; p++) {
+    if (!blankPages.has(p) || covered.has(p)) continue;
+    const previous = out.filter(
+      (s) => s.partId == null && s.start != null && s.end === p - 1 && s.id !== NO_CLASIFICADO
+    );
+    if (previous.length !== 1) continue;
+    previous[0].end = p;
+    covered.add(p);
+  }
+  return out.sort(sortSegments);
+}
+function blankLikePages(doc) {
+  const out = /* @__PURE__ */ new Set();
+  doc.getPages().forEach((page, index) => {
+    if (isBlankLikePage(page, doc)) out.add(index + 1);
+  });
+  return out;
+}
+function isBlankLikePage(page, doc) {
+  const node = page.node;
+  const contentBytes = streamBytes(node.Contents?.(), doc);
+  const stats = imageStats(node.Resources?.(), doc);
+  if (contentBytes === 0 && stats.imageCount === 0 && stats.nonImageCount === 0) return true;
+  if (stats.imageCount === 0 || stats.nonImageCount > 0 || stats.unsupportedImageCount > 0) return false;
+  if (contentBytes > MAX_IMAGE_ONLY_CONTENT_BYTES || stats.pixels === 0) return false;
+  return stats.bytes / stats.pixels <= NEAR_BLANK_MONO_IMAGE_BYTES_PER_PIXEL;
+}
+function streamBytes(obj, doc) {
+  const value = lookupPdfObject(obj, doc);
+  if (!value) return 0;
+  if (value instanceof pdfLib.PDFArray) {
+    let total = 0;
+    for (let i = 0; i < value.size(); i++) total += streamBytes(value.get(i), doc);
+    return total;
+  }
+  const contents = value.contents;
+  return contents instanceof Uint8Array ? contents.length : 0;
+}
+function imageStats(resources, doc) {
+  const xObjects = lookupPdfObject(resources?.lookup?.(pdfLib.PDFName.of("XObject")), doc);
+  const stats = { imageCount: 0, nonImageCount: 0, unsupportedImageCount: 0, bytes: 0, pixels: 0 };
+  if (!(xObjects instanceof pdfLib.PDFDict)) return stats;
+  for (const [, ref] of xObjects.entries()) {
+    const obj = lookupPdfObject(ref, doc);
+    if (!(obj instanceof pdfLib.PDFRawStream) || obj.dict.lookup(pdfLib.PDFName.of("Subtype"))?.toString() !== "/Image") {
+      stats.nonImageCount++;
+      continue;
+    }
+    const width = Number(obj.dict.lookup(pdfLib.PDFName.of("Width"))?.toString());
+    const height = Number(obj.dict.lookup(pdfLib.PDFName.of("Height"))?.toString());
+    const bitsPerComponent = obj.dict.lookup(pdfLib.PDFName.of("BitsPerComponent"))?.toString();
+    const colorSpace = obj.dict.lookup(pdfLib.PDFName.of("ColorSpace"))?.toString();
+    const filter = obj.dict.lookup(pdfLib.PDFName.of("Filter"))?.toString() ?? "";
+    if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0 || bitsPerComponent !== "1" || colorSpace !== "/DeviceGray" || !filter.includes("CCITTFaxDecode")) {
+      stats.unsupportedImageCount++;
+      continue;
+    }
+    stats.imageCount++;
+    stats.bytes += obj.contents.length;
+    stats.pixels += width * height;
+  }
+  return stats;
+}
+function lookupPdfObject(obj, doc) {
+  if (obj == null) return void 0;
+  try {
+    return doc.context.lookup(obj);
+  } catch {
+    return obj;
+  }
 }
 function sortSegments(a, b) {
   return (a.start ?? 0) - (b.start ?? 0) || (a.end ?? 0) - (b.end ?? 0) || a.id.localeCompare(b.id);

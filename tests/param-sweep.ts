@@ -1,8 +1,12 @@
 /**
- * Run a small generation-parameter bakeoff against high-signal failures.
+ * OBSOLETE as a generation-parameter bakeoff. The classifier model and
+ * generation profile are satellite-owned (`src/index.ts`) and cannot be
+ * overridden at call time, so `classify()` no longer accepts `model` /
+ * `generationConfig`. This harness now just runs the high-signal failure
+ * subset once against the satellite-default profile.
  *
- *   npm run param-sweep
- *   npm run param-sweep -- --full
+ *   npm run param-sweep            # high-signal subset
+ *   npm run param-sweep -- --full  # whole active corpus
  */
 
 import * as fs from 'fs'
@@ -23,29 +27,6 @@ const WRONG_LABEL_FILES = [
     'yulian/YULIAN GARCIA/Cartola Santander.pdf',
 ]
 
-const CONFIGS: Array<{ label: string; generationConfig?: Record<string, unknown> }> = [
-    { label: 'baseline-defaults' },
-    {
-        label: 'deterministic',
-        generationConfig: {
-            temperature: 0,
-            topP: 0.1,
-            seed: 1,
-            candidateCount: 1,
-        },
-    },
-    {
-        label: 'deterministic-think-1024',
-        generationConfig: {
-            temperature: 0,
-            topP: 0.1,
-            seed: 1,
-            candidateCount: 1,
-            thinkingConfig: { thinkingBudget: 1024 },
-        },
-    },
-]
-
 function stamp(): string {
     return new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14)
 }
@@ -54,26 +35,25 @@ async function main() {
     const full = process.argv.includes('--full')
     const outDir = path.resolve('out/param-sweep', stamp())
     fs.mkdirSync(outDir, { recursive: true })
-    const summary = []
-    for (const cfg of CONFIGS) {
-        const outPath = path.join(outDir, `${cfg.label}.json`)
-        const result = await runGroundtruthComparison({
-            files: full ? undefined : new Set(WRONG_LABEL_FILES),
-            outPath,
-            classifyOptions: cfg.generationConfig ? { generationConfig: cfg.generationConfig } : undefined,
-            label: cfg.label,
-        })
-        summary.push({
-            label: cfg.label,
-            generationConfig: cfg.generationConfig ?? null,
+    const outPath = path.join(outDir, 'satellite-default-profile.json')
+    const result = await runGroundtruthComparison({
+        files: full ? undefined : new Set(WRONG_LABEL_FILES),
+        outPath,
+        label: 'satellite-default-profile',
+    })
+    const summaryPath = path.join(outDir, 'summary.json')
+    fs.writeFileSync(summaryPath, JSON.stringify({
+        runAt: new Date().toISOString(),
+        full,
+        files: full ? 'all' : WRONG_LABEL_FILES,
+        summary: [{
+            label: 'satellite-default-profile',
             passCount: result.passCount,
             total: result.total,
             passRate: result.total ? result.passCount / result.total : 0,
             outPath,
-        })
-    }
-    const summaryPath = path.join(outDir, 'summary.json')
-    fs.writeFileSync(summaryPath, JSON.stringify({ runAt: new Date().toISOString(), full, files: full ? 'all' : WRONG_LABEL_FILES, summary }, null, 2))
+        }],
+    }, null, 2))
     console.log(`\nWrote ${summaryPath}`)
 }
 

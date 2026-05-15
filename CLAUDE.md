@@ -1,6 +1,6 @@
 # @jogi/classifier
 
-Lean AI-first document classifier satellite for Jogi. One Gemini call → segments → 3-pass geometry cleanup.
+Lean AI-first document classifier satellite for Jogi. One Gemini call → segments → geometry cleanup.
 
 ## Operating memory
 
@@ -16,7 +16,7 @@ Lean AI-first document classifier satellite for Jogi. One Gemini call → segmen
 4. **Algorithm is frozen**. Do not add per-page calls, local OCR, page ledgers, anchor regexes, deterministic doctype detectors, patchy post-processing, or "smart" merging without explicit approval. If a doctype mis-classifies, fix the doctype `definition`/`classifier`/`contains`/`freq` in the host's `doctypes.yaml`, or surface a prompt change for review.
 9. **Doctype `classifier` block**. Each doctype may carry an optional `classifier: { useWhen, signals, rejectWhen, tieBreaker }` block (authored in the host's `doctypes.yaml`). `promptFor()` renders it as telegraphic bullets; doctypes with no block fall back to `id: definition||label`. `configure()` runs boot validation — required fields present, every `tieBreaker.vs` resolves to a real id, every A→B pair has a reciprocal B→A — and throws on a broken catalog (defense-in-depth over the host's `build-doctypes.ts`, which auto-mirrors reciprocals). The old hardcoded "Debt/account distinctions" prose is gone from `src/prompt.ts`; it now lives as `tieBreaker` entries on `deuda-consumo`, `cartola-banco`, `deuda-hipotecaria`, and `compraventa-propiedad`.
 5. **Runtime deps**: `pdf-lib` only. No sharp, no AWS, no `@google/genai` in `src/`; `@google/genai` is allowed only in manual harnesses/playground.
-6. **Output is sorted segments**. PDF gaps are filled with `no-clasificado` (id constant exported as `NO_CLASIFICADO`).
+6. **Output is sorted segments**. PDF gaps are filled with `no-clasificado` (id constant exported as `NO_CLASIFICADO`) except uncovered blank/near-blank scanner-artifact pages, which attach to the immediately preceding single non-part document; leading blanks remain `no-clasificado`.
 7. **Confidence floor**: segments below `0.5` are dropped at parse time.
 8. **Fingerprint is content-derived**. `getClassifierFingerprint()` returns a 12-char sha256 over the static prompt template, response-schema shape, and generation profile. README/test/comment changes leave it untouched; prompt/schema/profile edits each move it.
 
@@ -45,7 +45,8 @@ Lean AI-first document classifier satellite for Jogi. One Gemini call → segmen
 - The resolved Evucina/Yulian incident plan is `../jogi/docs/plans/crooked.md`. Relevant outcome: fresh user uploads stopped deriving classifier candidates from `request.requirements`, container-fallback narrowing stayed, no-clasificado request-row dedupe was added, and cédula composite work belonged to `@jogi/docs`; no `@jogi/classifier` algorithm work was needed for that incident.
 - Immediate satellite corpus gate before paid Gemini runs: validate the per-file manifest first with `npm run corpus:manifest:per-file`. `corpus/per-solicitud` mirrors parent Jogi solicitud-folder behavior; use it for parent-process context, not as the first satellite classifier quality gate.
 - For visual inspection/debugging of per-file failures, use the local HTML review tool: run the dev server with `CORPUS_ROOT=corpus/per-file` and open `http://localhost:4177/review`. Because the curated per-file corpus is now all 100% inspection confidence, set `Trust at/below` to `100` and click Refresh to show all rows. This is the preferred way to inspect corpus rows and previews before changing prompt or annotations.
-- Classifier model is `gemini-2.5-pro`, embedded internally. Callers cannot override it — manual experiments live in `dev/` / `tests/param-sweep.ts` and bypass `classify()`.
+- Classifier model (`gemini-2.5-pro`) and generation profile (`temperature: 0, topP: 0.1, seed: 1, candidateCount: 1, thinkingBudget: 1024`) are embedded internally; `classify()` only accepts `{ candidateIds? }`. The `tests/groundtruth.ts` CLI generation flags (`--model`, `--temperature`, etc.) are obsolete and removed; a normal run is labeled `satellite-default-profile`. Truly free-form param experiments live in `dev/` and bypass `classify()`.
+- `tests/groundtruth.ts` prefers the production-like Vertex path: `GOOGLE_CLOUD_PROJECT` + `GOOGLE_CLOUD_LOCATION` → Vertex (default), else `GEMINI_API_KEY` → AI Studio fallback (warns; more 503-prone, not production-like). No need to unset `GEMINI_API_KEY` when the Vertex env vars are present. See `docs/corpus.md` "Auth".
 - Current curated per-file baseline: `out/per-file-groundtruth-20260513-161822.json`, regraded after the Astreide parser + CMF annotation fixes as `out/per-file-groundtruth-20260513-161822-regrade-astreide-cmf-fix.json`, is `33/35` strict pass on `corpus/per-file` with parent `../jogi/.env.local` credentials. The active per-file and per-solicitud manifests each have 74 expected rows. Failures: Maat final-page range clip and Scotiabank cartola-vs-deuda label. Astreide now passes; the earlier "3 cedulas" display was a corpus parser bug, and the CMF report is one `informe-deuda@14..15`.
 - CMF `informe-deuda` reports may include an optional explanatory/glossary page titled "Entendiendo mi Informe de Deuda". Treat it as part of the same CMF report when present, keep it inside the same segment range, and still classify it as `informe-deuda` if an extracted file contains only that page.
 - The latest difficult 11-case sweep is not solved: best Flash result is `4/11`; best Pro result is `7/11` with deterministic parameters plus `thinkingBudget: 1024`.
@@ -54,7 +55,7 @@ Lean AI-first document classifier satellite for Jogi. One Gemini call → segmen
 - Production was running the un-tuned 0.1.0 prompt from Apr 21 (jogi@753b8af3) through May 11 because the tuning was authored locally but never published. Fix shipped May 11 as classifier@9088bd4b, pinned by jogi@fb38e48a. Consolidated-position rule added in a follow-up.
 - Full-catalog PDF prompt is about 17.6k chars / roughly 4.4k tokens; the doctype block is about 85% of it. Prefer `candidateIds` narrowing plus full-catalog fallback over blindly shortening definitions.
 - Pro is roughly 4x Flash input cost for normal prompts and up to about 8x for prompts over 200k tokens; output is tiny JSON, so input dominates.
-- Do not add local dominance/range rules without PM approval; prefer parent-side `candidateIds`, prompt/doctypes, or ground-truth review first.
+- Do not add local dominance/range rules without PM approval; the approved exception is the generic blank-page attachment rule above. Prefer parent-side `candidateIds`, prompt/doctypes, or ground-truth review first.
 
 ## Consumer integration
 

@@ -3,12 +3,12 @@
  *
  * One Gemini call sees the whole file and returns final segments. Local code
  * only does geometry cleanup: duplicate collapse, exact same-range conflict
- * resolution, and PDF gap fill. No local OCR, anchors, page ledger, or doctype
- * detector.
+ * resolution, blank-page range attachment, and PDF gap fill. No local OCR,
+ * anchors, page ledger, or doctype detector.
  */
 
 import { createHash } from 'crypto'
-import { PDFDocument } from 'pdf-lib'
+import { PDFArray, PDFDict, PDFDocument, PDFName, PDFPage, PDFRawStream } from 'pdf-lib'
 import { promptFor } from './prompt'
 
 /**
@@ -105,6 +105,8 @@ export function getDoctypes(): Array<Doctype & { id: string }> {
 
 export const NO_CLASIFICADO = 'no-clasificado'
 const DEFAULT_MODEL = 'gemini-2.5-pro'
+const MAX_IMAGE_ONLY_CONTENT_BYTES = 256
+const NEAR_BLANK_MONO_IMAGE_BYTES_PER_PIXEL = 0.005
 // Deterministic generation profile. Owned by this satellite — the host must
 // not inject `model` or `generationConfig` at call time. Repeat classification
 // of identical input is bit-identical (required by host slice-cache hits and
@@ -124,15 +126,18 @@ export async function classify(buffer: Buffer, mimetype: string, opts: ClassifyO
     if (types.length === 0) return []
 
     const isPdf = mimetype === 'application/pdf'
-    const totalPages = isPdf ? await pageCount(buffer) : 1
+    const pdf = isPdf ? await pdfInfo(buffer) : null
+    const totalPages = pdf?.totalPages ?? 1
     const raw = await aiCall(buffer, mimetype, types, isPdf)
     const merged = mergeDuplicates(raw)
     const resolved = resolveSameRangeConflicts(merged)
-    return isPdf ? fillGaps(resolved, totalPages) : resolved
+    const blankAttached = pdf ? attachBlankPagesToPrevious(resolved, pdf.blankLikePages, totalPages) : resolved
+    return isPdf ? fillGaps(blankAttached, totalPages) : resolved
 }
 
-async function pageCount(buf: Buffer): Promise<number> {
-    return (await PDFDocument.load(Uint8Array.from(buf), { ignoreEncryption: true })).getPageCount()
+async function pdfInfo(buf: Buffer): Promise<{ totalPages: number; blankLikePages: Set<number> }> {
+    const doc = await PDFDocument.load(Uint8Array.from(buf), { ignoreEncryption: true })
+    return { totalPages: doc.getPageCount(), blankLikePages: blankLikePages(doc) }
 }
 
 function buildResponseSchema(ids: string[], isPdf: boolean): Record<string, unknown> {
@@ -227,6 +232,108 @@ function fillGaps(segs: Segment[], totalPages: number): Segment[] {
         else if (run != null) { gaps.push({ id: NO_CLASIFICADO, start: run, end: p - 1, confidence: 1 }); run = null }
     }
     return [...segs, ...gaps].sort(sortSegments)
+}
+
+function attachBlankPagesToPrevious(segs: Segment[], blankPages: Set<number>, totalPages: number): Segment[] {
+    if (!blankPages.size || !segs.length) return segs
+    const out = segs.map(s => ({ ...s }))
+    const covered = new Set<number>()
+    for (const s of out) {
+        if (s.start == null || s.end == null) continue
+        for (let p = s.start; p <= s.end; p++) covered.add(p)
+    }
+    for (let p = 1; p <= totalPages; p++) {
+        if (!blankPages.has(p) || covered.has(p)) continue
+        const previous = out.filter(s =>
+            s.partId == null
+            && s.start != null
+            && s.end === p - 1
+            && s.id !== NO_CLASIFICADO,
+        )
+        if (previous.length !== 1) continue
+        previous[0].end = p
+        covered.add(p)
+    }
+    return out.sort(sortSegments)
+}
+
+function blankLikePages(doc: PDFDocument): Set<number> {
+    const out = new Set<number>()
+    doc.getPages().forEach((page, index) => {
+        if (isBlankLikePage(page, doc)) out.add(index + 1)
+    })
+    return out
+}
+
+function isBlankLikePage(page: PDFPage, doc: PDFDocument): boolean {
+    const node = page.node as any
+    const contentBytes = streamBytes(node.Contents?.(), doc)
+    const stats = imageStats(node.Resources?.(), doc)
+    if (contentBytes === 0 && stats.imageCount === 0 && stats.nonImageCount === 0) return true
+    if (stats.imageCount === 0 || stats.nonImageCount > 0 || stats.unsupportedImageCount > 0) return false
+    if (contentBytes > MAX_IMAGE_ONLY_CONTENT_BYTES || stats.pixels === 0) return false
+    return stats.bytes / stats.pixels <= NEAR_BLANK_MONO_IMAGE_BYTES_PER_PIXEL
+}
+
+function streamBytes(obj: unknown, doc: PDFDocument): number {
+    const value = lookupPdfObject(obj, doc)
+    if (!value) return 0
+    if (value instanceof PDFArray) {
+        let total = 0
+        for (let i = 0; i < value.size(); i++) total += streamBytes(value.get(i), doc)
+        return total
+    }
+    const contents = (value as any).contents
+    return contents instanceof Uint8Array ? contents.length : 0
+}
+
+function imageStats(resources: unknown, doc: PDFDocument): {
+    imageCount: number
+    nonImageCount: number
+    unsupportedImageCount: number
+    bytes: number
+    pixels: number
+} {
+    const xObjects = lookupPdfObject((resources as PDFDict | undefined)?.lookup?.(PDFName.of('XObject')), doc)
+    const stats = { imageCount: 0, nonImageCount: 0, unsupportedImageCount: 0, bytes: 0, pixels: 0 }
+    if (!(xObjects instanceof PDFDict)) return stats
+    for (const [, ref] of xObjects.entries()) {
+        const obj = lookupPdfObject(ref, doc)
+        if (!(obj instanceof PDFRawStream) || obj.dict.lookup(PDFName.of('Subtype'))?.toString() !== '/Image') {
+            stats.nonImageCount++
+            continue
+        }
+        const width = Number(obj.dict.lookup(PDFName.of('Width'))?.toString())
+        const height = Number(obj.dict.lookup(PDFName.of('Height'))?.toString())
+        const bitsPerComponent = obj.dict.lookup(PDFName.of('BitsPerComponent'))?.toString()
+        const colorSpace = obj.dict.lookup(PDFName.of('ColorSpace'))?.toString()
+        const filter = obj.dict.lookup(PDFName.of('Filter'))?.toString() ?? ''
+        if (
+            !Number.isFinite(width)
+            || !Number.isFinite(height)
+            || width <= 0
+            || height <= 0
+            || bitsPerComponent !== '1'
+            || colorSpace !== '/DeviceGray'
+            || !filter.includes('CCITTFaxDecode')
+        ) {
+            stats.unsupportedImageCount++
+            continue
+        }
+        stats.imageCount++
+        stats.bytes += obj.contents.length
+        stats.pixels += width * height
+    }
+    return stats
+}
+
+function lookupPdfObject(obj: unknown, doc: PDFDocument): unknown {
+    if (obj == null) return undefined
+    try {
+        return doc.context.lookup(obj as any)
+    } catch {
+        return obj
+    }
 }
 
 function sortSegments(a: Segment, b: Segment): number {

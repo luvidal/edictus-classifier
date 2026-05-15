@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Corpus Review</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f6f7;
+      --panel: #ffffff;
+      --line: #d7dde3;
+      --text: #17212b;
+      --muted: #65727f;
+      --accent: #0f766e;
+      --accent-soft: #e6f4f1;
+      --warn: #995c00;
+      --warn-soft: #fff4dd;
+      --danger: #b42318;
+      --danger-soft: #fff0ee;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+    }
+    button, input, label {
+      font: inherit;
+    }
+    button, a.button {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 6px;
+      cursor: pointer;
+      min-height: 36px;
+      padding: 7px 11px;
+      font-size: 13px;
+      font-weight: 760;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+    a {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      background: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 18px;
+      display: grid;
+      gap: 12px;
+      backdrop-filter: blur(8px);
+    }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: baseline;
+    }
+    h1 {
+      font-size: 20px;
+      line-height: 1.15;
+      margin: 0;
+      letter-spacing: 0;
+    }
+    .status {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .status.error {
+      color: var(--danger);
+      font-weight: 700;
+    }
+    .filters {
+      display: grid;
+      grid-template-columns: minmax(130px, 180px) minmax(90px, 120px) auto;
+      gap: 9px;
+      align-items: end;
+    }
+    .filters label {
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+    }
+    .filters input {
+      width: 100%;
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--text);
+      padding: 7px 9px;
+      font-weight: 700;
+    }
+    .refresh {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .cards {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      display: grid;
+      grid-template-columns: 164px minmax(0, 1fr);
+      min-height: 220px;
+      overflow: hidden;
+    }
+    .preview {
+      background: #e6ebef;
+      border-right: 1px solid var(--line);
+      display: grid;
+      place-items: start center;
+      min-height: 220px;
+      padding: 8px;
+    }
+    .preview img {
+      display: block;
+      max-width: 100%;
+      max-height: 204px;
+      width: auto;
+      height: auto;
+      background: #fff;
+      box-shadow: 0 1px 5px rgba(23, 33, 43, 0.18);
+    }
+    .preview .blank {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      padding: 12px;
+    }
+    .body {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+    .card-head {
+      padding: 12px 14px;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto auto;
+      gap: 10px;
+      align-items: start;
+      border-bottom: 1px solid var(--line);
+    }
+    .rank {
+      font-size: 30px;
+      line-height: 1;
+      font-weight: 850;
+      letter-spacing: 0;
+      color: var(--accent);
+      min-width: 56px;
+    }
+    .file {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+    }
+    .path {
+      font-size: 13px;
+      line-height: 1.3;
+      font-weight: 720;
+      overflow-wrap: anywhere;
+    }
+    .meta {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+    .trust {
+      min-width: 70px;
+      border: 1px solid #e6c778;
+      border-radius: 6px;
+      background: var(--warn-soft);
+      color: var(--warn);
+      padding: 7px 9px;
+      text-align: center;
+      font-weight: 850;
+    }
+    .trust.missing {
+      border-color: #f0aaa2;
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+    .splits {
+      padding: 12px 14px 14px;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+    .split {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fbfcfd;
+      padding: 10px 12px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+    }
+    .split.needs-review {
+      border-color: #f0aaa2;
+      background: var(--danger-soft);
+    }
+    .doc-id {
+      font-size: 18px;
+      line-height: 1.15;
+      font-weight: 850;
+      letter-spacing: 0;
+      overflow-wrap: anywhere;
+    }
+    .interval {
+      min-width: 96px;
+      border-radius: 6px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 8px 10px;
+      text-align: center;
+      font-size: 18px;
+      line-height: 1;
+      font-weight: 850;
+    }
+    .split-foot {
+      grid-column: 1 / -1;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.25;
+    }
+    .empty {
+      min-height: 55vh;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      text-align: center;
+      padding: 28px;
+      font-size: 16px;
+    }
+    @media (max-width: 760px) {
+      .filters {
+        grid-template-columns: 1fr 1fr;
+      }
+      .card {
+        grid-template-columns: 116px minmax(0, 1fr);
+        min-height: 180px;
+      }
+      .preview {
+        min-height: 180px;
+      }
+      .preview img {
+        max-height: 164px;
+      }
+      .card-head {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+      .trust, .button {
+        justify-self: start;
+      }
+      .rank {
+        font-size: 24px;
+        min-width: 45px;
+      }
+      .doc-id, .interval {
+        font-size: 16px;
+      }
+      .split {
+        grid-template-columns: 1fr;
+      }
+      .interval {
+        justify-self: start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="top">
+        <h1>Corpus Review</h1>
+        <a href="/" title="Playground">Playground</a>
+      </div>
+      <div id="status" class="status">Loading</div>
+      <div class="filters">
+        <label>
+          Trust at/below
+          <input id="threshold" type="number" min="0" max="100" step="1" value="95">
+        </label>
+        <label>
+          Limit
+          <input id="limit" type="number" min="1" max="1000" step="1" value="200">
+        </label>
+        <button id="refresh" class="refresh">Refresh</button>
+      </div>
+    </header>
+    <section id="cards" class="cards"></section>
+  </main>
+  <script>
+    const state = {
+      data: null,
+      entries: []
+    }
+
+    const els = {
+      status: document.getElementById('status'),
+      threshold: document.getElementById('threshold'),
+      limit: document.getElementById('limit'),
+      refresh: document.getElementById('refresh'),
+      cards: document.getElementById('cards')
+    }
+
+    function setStatus(text, error) {
+      els.status.textContent = text
+      els.status.className = error ? 'status error' : 'status'
+    }
+
+    function formatConfidence(value) {
+      return value == null ? '?' : `${value}%`
+    }
+
+    function formatBytes(value) {
+      if (!Number.isFinite(value)) return '?'
+      if (value < 1024 * 1024) return `${Math.ceil(value / 1024)} KB`
+      return `${(value / 1024 / 1024).toFixed(1)} MB`
+    }
+
+    function isPdf(entry) {
+      return entry && entry.mimetype === 'application/pdf'
+    }
+
+    function pageCount(entry) {
+      return Math.max(1, Number(entry && entry.pages ? entry.pages : 1))
+    }
+
+    function previewPage(entry) {
+      const firstSegment = entry.segments && entry.segments[0]
+      const page = firstSegment && firstSegment.start ? firstSegment.start : 1
+      return Math.max(1, Math.min(pageCount(entry), page))
+    }
+
+    function previewUrl(entry) {
+      if (isPdf(entry)) {
+        return `/corpus-page?${new URLSearchParams({ path: entry.relPath, page: String(previewPage(entry)) }).toString()}`
+      }
+      if (entry.mimetype && entry.mimetype.startsWith('image/')) return entry.fileUrl
+      return null
+    }
+
+    function intervalLabel(segment) {
+      if (!segment || !segment.interval || segment.interval === '?') return '?'
+      return segment.interval.includes('-') ? segment.interval : segment.interval
+    }
+
+    function splitSource(segment) {
+      if (!segment) return ''
+      if (segment.rangeSource === 'annotation') return 'annotated'
+      if (segment.rangeSource === 'suggested') return `suggested ${segment.rangeConfidence}`
+      return 'needs review'
+    }
+
+    function makePreview(entry) {
+      const link = document.createElement('a')
+      link.className = 'preview'
+      link.href = entry.fileUrl
+      link.target = '_blank'
+      link.rel = 'noreferrer'
+      const src = previewUrl(entry)
+      if (!src) {
+        const blank = document.createElement('div')
+        blank.className = 'blank'
+        blank.textContent = 'No preview'
+        link.append(blank)
+        return link
+      }
+      const img = document.createElement('img')
+      img.src = src
+      img.loading = 'lazy'
+      img.alt = `#${entry.rank} preview`
+      link.append(img)
+      return link
+    }
+
+    function makeSplit(segment) {
+      const row = document.createElement('div')
+      row.className = `split${segment.needsReview ? ' needs-review' : ''}`
+
+      const id = document.createElement('div')
+      id.className = 'doc-id'
+      id.textContent = segment.id
+
+      const interval = document.createElement('div')
+      interval.className = 'interval'
+      interval.textContent = `[${intervalLabel(segment)}]`
+
+      const foot = document.createElement('div')
+      foot.className = 'split-foot'
+      const parts = [splitSource(segment), `trust ${formatConfidence(segment.inspectionConfidence)}`]
+      if (segment.partId) parts.push(segment.partId)
+      if (segment.rangeNote) parts.push(segment.rangeNote)
+      foot.textContent = parts.filter(Boolean).join(' - ')
+
+      row.append(id, interval, foot)
+      return row
+    }
+
+    function makeCard(entry) {
+      const card = document.createElement('article')
+      card.className = 'card'
+
+      const body = document.createElement('div')
+      body.className = 'body'
+
+      const head = document.createElement('div')
+      head.className = 'card-head'
+
+      const rank = document.createElement('div')
+      rank.className = 'rank'
+      rank.textContent = `#${entry.rank}`
+
+      const file = document.createElement('div')
+      file.className = 'file'
+      const path = document.createElement('div')
+      path.className = 'path'
+      path.textContent = entry.relPath
+      const meta = document.createElement('div')
+      meta.className = 'meta'
+      const pageText = `${entry.pages || '?'} page${entry.pages === 1 ? '' : 's'}`
+      meta.textContent = `${pageText} - ${formatBytes(entry.sizeBytes)}`
+      file.append(path, meta)
+
+      const trust = document.createElement('div')
+      trust.className = `trust${entry.minInspectionConfidence == null ? ' missing' : ''}`
+      trust.textContent = formatConfidence(entry.minInspectionConfidence)
+
+      const open = document.createElement('a')
+      open.className = 'button'
+      open.href = entry.fileUrl
+      open.target = '_blank'
+      open.rel = 'noreferrer'
+      open.textContent = 'Open file'
+
+      head.append(rank, file, trust, open)
+
+      const splits = document.createElement('div')
+      splits.className = 'splits'
+      if (!entry.segments.length) {
+        const empty = document.createElement('div')
+        empty.className = 'split needs-review'
+        empty.textContent = 'No annotation rows'
+        splits.append(empty)
+      } else {
+        entry.segments.forEach(segment => splits.append(makeSplit(segment)))
+      }
+
+      body.append(head, splits)
+      card.append(makePreview(entry), body)
+      return card
+    }
+
+    function render() {
+      els.cards.innerHTML = ''
+      if (!state.entries.length) {
+        const empty = document.createElement('div')
+        empty.className = 'empty'
+        empty.textContent = `No candidates at/below ${els.threshold.value || '?'}%`
+        els.cards.append(empty)
+        return
+      }
+      state.entries.forEach(entry => els.cards.append(makeCard(entry)))
+    }
+
+    async function loadReview() {
+      els.refresh.disabled = true
+      setStatus('Loading', false)
+      try {
+        const params = new URLSearchParams({
+          threshold: els.threshold.value || '95',
+          limit: els.limit.value || '200'
+        })
+        const res = await fetch(`/api/corpus/review?${params.toString()}`)
+        const json = await res.json()
+        if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
+        state.data = json
+        state.entries = json.entries || []
+        setStatus(`${json.count}/${json.totalCandidates} shown`, false)
+        render()
+      } catch (err) {
+        state.data = null
+        state.entries = []
+        setStatus(String(err && err.message ? err.message : err), true)
+        render()
+      } finally {
+        els.refresh.disabled = false
+      }
+    }
+
+    els.refresh.addEventListener('click', loadReview)
+    els.threshold.addEventListener('keydown', event => { if (event.key === 'Enter') loadReview() })
+    els.limit.addEventListener('keydown', event => { if (event.key === 'Enter') loadReview() })
+    loadReview()
+  </script>
+</body>
+</html>

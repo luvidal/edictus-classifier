@@ -4,6 +4,60 @@ We are debugging the lean sandbox classifier, not rebuilding `@jogi/docs`.
 
 Main goal: keep it fast, cheap, and simple. No OCR, page ledger, regex detector, local doctype detector, or pile of post-processing unless evidence forces it.
 
+## Current Handoff
+
+Parent-side plan scan, 2026-05-13:
+
+- `../jogi/docs/plans/classification-mega-refactor.md` is the relevant host plan. It keeps the satellite as the black-box AI classifier and improves quality by tightening the host/satellite boundary plus adding replayed integration fixtures for the upload pipeline.
+- That plan says quality lives in four places: this satellite, `../jogi/data/doctypes.json`, host pipeline interactions, and irreducible Gemini Pro variance. Do not treat host fixture work as permission to add classifier-side OCR, page ledgers, local detectors, or smart merging.
+- `../jogi/docs/plans/crooked.md` is resolved. It documents that the Evucina/Yulian incident was handled mostly host-side: full-catalog fresh uploads instead of `request.requirements` narrowing, deterministic config, slice-cache invalidation, no-clasificado dedupe, and a cédula composite fix in `@jogi/docs`.
+
+Immediate workflow:
+
+- Test the per-file manifest before any paid Gemini groundtruth run for this satellite.
+- Run `npm run corpus:manifest:per-file`.
+- If the manifest has errors, fix annotations/corpus shape before running `groundtruth:per-file`.
+- Treat `corpus/per-solicitud` as parent Jogi solicitud-folder process context, not as the first check for the standalone classifier path.
+- For visual review, run the local HTML corpus review tool against `CORPUS_ROOT=corpus/per-file` and open `/review`. Set `Trust at/below` to `100` and Refresh because the curated per-file rows are now all 100% trusted. Use it to inspect source previews and annotations for failed per-file cases before deciding whether a failure is classifier behavior, prompt/doctype policy, or annotation policy.
+
+Manifest check, 2026-05-13:
+
+- `corpus:manifest:per-file`: 35 supported / 35 annotated / 74 expected rows / 0 review queue / 0 duplicate groups / 0 problems.
+- `corpus:manifest:per-solicitud`: 59 supported / 59 annotated / 74 expected rows / 0 review queue / 0 duplicate groups / 0 problems. This is parent-process context, not the first satellite quality gate.
+- Both generated ignored `manifest.json` files under `corpus/per-file/` and `corpus/per-solicitud/`.
+
+Current per-file run, 2026-05-13:
+
+- Command: `DOTENV_CONFIG_PATH=/Users/avd/GitHub/jogi/.env.local npm run groundtruth:per-file -- --out=out/per-file-groundtruth-20260513-161822.json`.
+- Result after annotation regrade: `33/35` strict pass. All 35 files were unique classifications in the paid run; no dedupe reuse.
+- The Astreide "3 cedulas" review display was a harness/parser bug, not a Gemini bug. The annotation says page 1 is `Cédula Frente` and page 2 is `Cédula Revés`; the parser incorrectly expanded the page-2 note `Composite split (Frente p1 / Revés p2)` as if page 2 contained both sides. Fixed in `tests/corpus-manifest.ts` and `tests/groundtruth.ts`; regrade artifact: `out/per-file-groundtruth-20260513-161822-regrade-parserfix.json`.
+- `files/multi-astreide-bundle.pdf`: now passes. Cédula expectations are `cedula-identidad@1..1(front)` and `cedula-identidad@2..2(back)`, matching the saved Gemini actuals. CMF expectation was corrected to one `informe-deuda@14..15` because p15 is the optional explanatory page of the same report; final regrade artifact: `out/per-file-groundtruth-20260513-161822-regrade-astreide-cmf-fix.json`.
+- CMF rule update: the optional explanatory/glossary page titled "Entendiendo mi Informe de Deuda" is part of the CMF report. It may appear or not appear. If present with a report, keep it inside the same `informe-deuda` range; if extracted by itself, still classify it as `informe-deuda`.
+- `files/informe-comercial-maat.pdf`: expected `informe-credito@1..6`; actual clipped to `informe-credito@1..5` plus PDF gap fill `no-clasificado@6..6`.
+- `files/cartola-scotiabank-screenshot.png`: expected `cartola-banco`; actual returned `deuda-consumo`. This is the known consolidated-position/cartola-vs-deuda boundary resurfacing on the curated per-file corpus.
+
+Harness + auth update, 2026-05-14:
+
+- The classifier model and generation profile are satellite-owned (`src/index.ts`): `gemini-2.5-pro`, `temperature: 0`, `topP: 0.1`, `seed: 1`, `candidateCount: 1`, `thinkingBudget: 1024`. `classify()` only accepts `{ candidateIds? }`. The old `tests/groundtruth.ts` CLI generation flags (`--model`, `--temperature`, `--topP`, `--topK`, `--seed`, `--candidateCount`, `--thinkingBudget`) are obsolete and removed; `parseGenerationConfig` and the `classifyOptions` model/generationConfig plumbing are gone. A normal run is labeled `satellite-default-profile`.
+- `tests/groundtruth.ts` `geminiCall()` now prefers the production-like Vertex path: `GOOGLE_CLOUD_PROJECT` + `GOOGLE_CLOUD_LOCATION` → Vertex (default); else `GEMINI_API_KEY` → AI Studio fallback with a printed warning. `JOGI_GROUNDTRUTH_PROVIDER=ai-studio|vertex` can force a provider. You do not need to unset `GEMINI_API_KEY` when the Vertex env vars are present.
+- Previous 503-heavy paid runs likely hit the AI Studio endpoint because the old `geminiCall()` checked `GEMINI_API_KEY` first and preferred the consumer endpoint over Vertex. Those runs are not production-like validation.
+- `tests/param-sweep.ts` is no longer a generation-parameter bakeoff (params can't be overridden); it now just runs the high-signal failure subset once against the satellite-default profile.
+- Recommended Vertex paid command: `DOTENV_CONFIG_PATH=/Users/avd/GitHub/jogi/.env.local npm run groundtruth:per-file -- --out=out/per-file-groundtruth.json`.
+
+May 14 YAML compacted catalog / Vertex validation:
+
+- Parent commit: `jogi@55e39826` (`refactor(doctypes): YAML-native catalog + structured classifier blocks`) contains the YAML-native catalog, generated `data/doctypes.json`, sync gates, slice-cache full-catalog hash, Gemini-only host classify/extract path, and the parent pin to `@jogi/classifier#e18a5a6`.
+- Clean Vertex run before the final targeted YAML fixes: `out/per-file-groundtruth-doctype-bullets-vertex.json` was `32/35` with no infra failures. It fixed `files/multi-astreide-bundle.pdf` and `files/cartola-scotiabank-screenshot.png`, but regressed `files/boletas-fragment-misnamed-dai-2024.pdf` and `files/avaluo-fiscal-multirol.pdf`; `files/informe-comercial-maat.pdf` remained the pre-existing trailing-page range clip.
+- Targeted YAML fixes kept the architecture prompt-first/catalog-first: `avaluo-fiscal.useWhen` now says the certificate is one document spanning all pages even when properties appear on separate pages; `carpeta-tributaria` was tightened so a lone interior BHE/F29 page is not promoted to the container. Targeted Vertex checks passed after the second avaluo attempt: `out/targeted-avaluo2.json`, `out/targeted-boletas.json`, `out/targeted-carpeta.json`, `out/targeted-astreide.json`, and `out/targeted-cartola.json`.
+- Final clean Vertex corpus artifact before blank-page policy: `out/per-file-groundtruth-doctype-bullets-final.json` is `34/35` strict pass on the 35-file per-file corpus, labeled `satellite-default-profile`. The only remaining failure is `files/informe-comercial-maat.pdf` (`informe-credito@1..5` plus `no-clasificado@6..6` instead of `@1..6`), which led to the blank-page range policy below.
+
+Blank-page range semantics, 2026-05-14:
+
+- `files/informe-comercial-maat.pdf` is not an `informe-credito` recognition failure. The model consistently returns `informe-credito@1..5`; page 6 is a near-blank scan artifact (`pdfimages` shows an 8.8 KB page versus 78-158 KB for pages 1-5), and the corpus annotation says it is "prácticamente en blanco".
+- Product decision: blank / near-blank scanner-artifact pages belong to the preceding document; no document starts on a blank page.
+- Implemented as a generic PDF range rule, not as an `informe-credito`-specific YAML hint: the prompt asks the model to include trailing blank pages in the previous range, and local cleanup attaches uncovered blank-like pages to the immediately preceding single non-part segment before normal `no-clasificado` gap fill.
+- Leading blank pages remain `no-clasificado` until visible document evidence begins; nonblank omitted pages still become `no-clasificado`.
+
 ## What We Tested
 
 Parameter sweep before prompt/definition changes:
