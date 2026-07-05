@@ -41,8 +41,9 @@ ${isPdf ? `PDF range rules:
 - If a blank, near-blank, or scanner-artifact page appears immediately after a classified document and before any new visible document begins, include it in the previous document's range; no document starts on a blank page.
 - Multiple recurring instances, such as monthly liquidaciones or annual SII forms, get separate rows with disjoint ranges and their own docdate.
 - Do not return two different non-container doctypes for the exact same page range. Choose the one best supported by visible title/issuer/layout.
-- Container PDFs such as carpeta-tributaria return a single row whose page range covers the pages actually present in this upload when the upload presents as that container (visible title/cover/header or multiple consecutive container pages); do not emit child documents (F22, boletas, etc.) inside that container. Do not extrapolate the range beyond the last visible page (a 4-page extract of a carpeta is @1..4, not @1..12). A lone interior page without the container title/header should be classified by its visible standalone content.
-- Long legal packets and certified notarial deed copies are dominant-document uploads: return one compraventa-propiedad row for the whole packet/reproduced range unless the file clearly contains separate uploaded requirements. Do not carve out mortgage clauses, SII tables, certificates, appraisals, bank-looking annexes, or signatures inside that deed as separate documents.
+- Container PDFs such as carpeta-tributaria return one row whose page range covers the pages actually present in this upload when the upload presents as that container (visible title/cover/header or multiple consecutive container pages). Do not extrapolate the range beyond the last visible page (a 4-page extract of a carpeta is @1..4, not @1..12). A lone interior page without the container title/header should be classified by its visible standalone content.
+- Child emission applies ONLY when the parent doctype's line in this prompt's Doctypes list literally shows a "contains=[...]" meta block. If the parent doctype has no "contains=[...]" meta, it is NOT a container and this rule does NOT apply \u2014 do not carve out interior children from it. When the parent IS a container, ALSO emit each child id that literally appears in that parent's "contains=[...]" list AND that appears in this upload AS ITS OWN STANDALONE FORM (own visible title/header/issuer page that satisfies the child's own useWhen/signals/rejectWhen). Use the child's own page range, not the container's. Any id not listed in the parent's "contains=[...]" is never a child of that parent and must not be emitted as such. Examples for carpeta-tributaria (contains=[declaracion-anual-impuestos, resumen-boletas-sii]): a printed Form 22 page with the visible 'REPUBLICA DE CHILE / SERVICIO DE IMPUESTOS INTERNOS FORM. 22' + 'A\xD1O TRIBUTARIO YYYY' header is a separate declaracion-anual-impuestos row; an annual SII honorarios summary header is a separate resumen-boletas-sii row. The carpeta's table-of-contents lines, F29 monthly lists, or section titles are NOT standalone children \u2014 they remain covered by the carpeta row only.
+- Long legal packets and certified notarial deed copies are dominant-document uploads: return one compraventa-propiedad row for the whole packet/reproduced range unless the file clearly contains separate uploaded requirements. compraventa-propiedad has no "contains=[...]" meta \u2014 it is NOT a container, so the child-emission rule above does NOT apply to it. Do not carve out mortgage clauses, SII tables, certificates (no-matrimonio, CMF informe-deuda, resumen-boletas-sii), appraisals, bank-looking annexes, or signatures inside that deed as separate documents, even if those interior pages look like standalone forms on their own.
 ` : ""}Cedula rule:
 - If both faces of cedula-identidad are visible in one ${isPdf ? "page" : "image"}, return two cedula-identidad rows with different partId ("front" and "back").
 - If only one face is visible, return one row with that partId when clear.
@@ -65,7 +66,7 @@ ${list}`;
 }
 
 // src/index.ts
-var CONFIG_KEY = /* @__PURE__ */ Symbol.for("@jogi/classifier.config");
+var CONFIG_KEY = /* @__PURE__ */ Symbol.for("@edictus/classifier.config");
 var g = globalThis;
 function validateDoctypes(doctypes) {
   const ids = new Set(Object.keys(doctypes));
@@ -90,7 +91,7 @@ function validateDoctypes(doctypes) {
       }
     }
   }
-  if (errors.length) throw new Error(`@jogi/classifier: invalid doctype catalog:
+  if (errors.length) throw new Error(`@edictus/classifier: invalid doctype catalog:
   ${errors.join("\n  ")}`);
 }
 function configure(c) {
@@ -99,7 +100,7 @@ function configure(c) {
 }
 function getConfig() {
   const c = g[CONFIG_KEY];
-  if (!c) throw new Error("@jogi/classifier: configure({ doctypes, geminiCall }) was not called");
+  if (!c) throw new Error("@edictus/classifier: configure({ doctypes, geminiCall }) was not called");
   return c;
 }
 function getDoctypesMap() {

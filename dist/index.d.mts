@@ -1,5 +1,5 @@
 /**
- * @jogi/classifier - lean prompt-first document classifier.
+ * @edictus/classifier - lean prompt-first document classifier.
  *
  * One Gemini call sees the whole file and returns final segments. Local code
  * only does geometry cleanup: duplicate collapse, exact same-range conflict

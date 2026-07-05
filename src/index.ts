@@ -1,5 +1,5 @@
 /**
- * @jogi/classifier - lean prompt-first document classifier.
+ * @edictus/classifier - lean prompt-first document classifier.
  *
  * One Gemini call sees the whole file and returns final segments. Local code
  * only does geometry cleanup: duplicate collapse, exact same-range conflict
@@ -50,7 +50,7 @@ export interface ClassifyOptions {
 export type GeminiCall = (params: { model: string; contents: any; config?: any }) => Promise<any>
 export interface ClassifierConfig { doctypes: DoctypesMap; geminiCall: GeminiCall }
 
-const CONFIG_KEY = Symbol.for('@jogi/classifier.config')
+const CONFIG_KEY = Symbol.for('@edictus/classifier.config')
 const g = globalThis as unknown as Record<symbol, ClassifierConfig | undefined>
 
 /**
@@ -86,7 +86,7 @@ function validateDoctypes(doctypes: DoctypesMap): void {
             }
         }
     }
-    if (errors.length) throw new Error(`@jogi/classifier: invalid doctype catalog:\n  ${errors.join('\n  ')}`)
+    if (errors.length) throw new Error(`@edictus/classifier: invalid doctype catalog:\n  ${errors.join('\n  ')}`)
 }
 
 export function configure(c: ClassifierConfig): void {
@@ -95,7 +95,7 @@ export function configure(c: ClassifierConfig): void {
 }
 function getConfig(): ClassifierConfig {
     const c = g[CONFIG_KEY]
-    if (!c) throw new Error('@jogi/classifier: configure({ doctypes, geminiCall }) was not called')
+    if (!c) throw new Error('@edictus/classifier: configure({ doctypes, geminiCall }) was not called')
     return c
 }
 export function getDoctypesMap(): DoctypesMap { return getConfig().doctypes }
