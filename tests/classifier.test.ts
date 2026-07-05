@@ -1,5 +1,5 @@
 /**
- * Smoke tests for @jogi/classifier.
+ * Smoke tests for @edictus/classifier.
  *
  * No real Gemini call: geminiCall is stubbed to return canned responses.
  * Validates that configure() wiring, prompt assembly, schema validation,
@@ -46,7 +46,7 @@ function stubGemini(documents: Array<Record<string, unknown>>): GeminiCall {
 describe('configure', () => {
     it('throws when classify() is called before configure()', async () => {
         // Reset the global symbol slot.
-        const sym = Symbol.for('@jogi/classifier.config')
+        const sym = Symbol.for('@edictus/classifier.config')
         ;(globalThis as any)[sym] = undefined
         await expect(classify(Buffer.from('x'), 'image/png')).rejects.toThrow(/configure/)
     })

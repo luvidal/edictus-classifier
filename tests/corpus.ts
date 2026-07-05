@@ -1,5 +1,5 @@
 /**
- * Manual corpus harness for @jogi/classifier.
+ * Manual corpus harness for @edictus/classifier.
  *
  * Runs the classifier against a curated set of real Chilean documents and
  * checks expected segments per file. NOT a CI test — needs a real Gemini API

@@ -1,5 +1,5 @@
 /**
- * Compare @jogi/classifier against CLASSIFICATION.md files.
+ * Compare @edictus/classifier against CLASSIFICATION.md files.
  *
  *   npm run groundtruth -- [--only=substr] [--out=out/groundtruth.json]
  *   npm run groundtruth -- --actual=out/sweep.json --out=out/groundtruth-from-sweep.json
