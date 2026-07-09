@@ -8,9 +8,9 @@ Main goal: keep it fast, cheap, and simple. No OCR, page ledger, regex detector,
 
 Parent-side plan scan, 2026-05-13:
 
-- `../jogi/docs/plans/classification-mega-refactor.md` is the relevant host plan. It keeps the satellite as the black-box AI classifier and improves quality by tightening the host/satellite boundary plus adding replayed integration fixtures for the upload pipeline.
+- `../../docs/plans/classification-mega-refactor.md` is the relevant host plan. It keeps the satellite as the black-box AI classifier and improves quality by tightening the host/satellite boundary plus adding replayed integration fixtures for the upload pipeline.
 - That plan says quality lives in four places: this satellite, `../jogi/data/doctypes.json`, host pipeline interactions, and irreducible Gemini Pro variance. Do not treat host fixture work as permission to add classifier-side OCR, page ledgers, local detectors, or smart merging.
-- `../jogi/docs/plans/crooked.md` is resolved. It documents that the Evucina/Yulian incident was handled mostly host-side: full-catalog fresh uploads instead of `request.requirements` narrowing, deterministic config, slice-cache invalidation, no-clasificado dedupe, and a cédula composite fix in `@jogi/docs`.
+- `../../docs/plans/crooked.md` is resolved. It documents that the Evucina/Yulian incident was handled mostly host-side: full-catalog fresh uploads instead of `request.requirements` narrowing, deterministic config, slice-cache invalidation, no-clasificado dedupe, and a cédula composite fix in `@jogi/docs`.
 
 Immediate workflow:
 
@@ -510,7 +510,7 @@ Validated the risk-surface-subset-before-full-corpus pattern. The 3-minute 19-ca
 
 ## May 11 Fourth Iteration — Debt-Doc Precision (informe-deuda / informe-credito / deuda-consumo)
 
-Driven by parent plan `../jogi/docs/plans/classifier-debt-doc-precision.md`. Three failure modes from a redacted batch (2026-05-11): a 2-page CMF informe-deuda got per-page-split into siblings; a fragment of a third-party judicial expediente got typed as `informe-credito`; a single-transaction card payment screenshot got typed as `deuda-consumo`. Plan step A extends the `definition` of each affected doctype in `../jogi/data/doctypes.json`. Steps B (prompt version bump) and C (defensive collapse in `dedupe.ts`) were not needed — `@jogi/docs` `getPromptVersion()` digests `JSON.stringify(getDoctypes())` so definition edits bust the slice cache automatically, and step A is sufficient.
+Driven by parent plan `../../docs/plans/classifier-debt-doc-precision.md`. Three failure modes from a redacted batch (2026-05-11): a 2-page CMF informe-deuda got per-page-split into siblings; a fragment of a third-party judicial expediente got typed as `informe-credito`; a single-transaction card payment screenshot got typed as `deuda-consumo`. Plan step A extends the `definition` of each affected doctype in `../jogi/data/doctypes.json`. Steps B (prompt version bump) and C (defensive collapse in `dedupe.ts`) were not needed — `@jogi/docs` `getPromptVersion()` digests `JSON.stringify(getDoctypes())` so definition edits bust the slice cache automatically, and step A is sufficient.
 
 ### Definition extensions
 
