@@ -1,4 +1,4 @@
-# @jogi/classifier
+# @edictus/classifier
 
 Lean prompt-first document classifier for Chilean documents. Extracted from Jogi to isolate the AI-first classification path from the legacy per-page detector pipeline.
 
@@ -37,7 +37,7 @@ Each `Segment` has `id`, `confidence`, optional `start`/`end` (1-indexed inclusi
 The library has no AI SDK as a runtime dependency. The host provides the doctypes catalog and a Gemini caller:
 
 ```ts
-import { configure, classify } from '@jogi/classifier'
+import { configure, classify } from '@edictus/classifier'
 import doctypes from './data/doctypes.json'
 import { geminiGenerate } from './lib/server/gemini'
 
@@ -74,12 +74,12 @@ The library handles JSON parsing, schema enforcement (`responseMimeType: 'applic
 
 ## Host transition guide
 
-When migrating a host app from direct Gemini calls to `@jogi/classifier`, move only the classification prompt/cleanup into this package. Leave auth and transport in the host:
+When migrating a host app from direct Gemini calls to `@edictus/classifier`, move only the classification prompt/cleanup into this package. Leave auth and transport in the host:
 
 ```ts
-// Host app code, not @jogi/classifier/src.
+// Host app code, not @edictus/classifier/src.
 import { GoogleGenAI } from '@google/genai'
-import { configure as configureClassifier } from '@jogi/classifier'
+import { configure as configureClassifier } from '@edictus/classifier'
 import doctypes from './data/doctypes.json'
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
@@ -102,7 +102,7 @@ app's auth, caching, persistence, field extraction, PDF splitting, or linking.
 1. Pin this package by commit SHA in `../jogi/package.json`:
 
 ```json
-"@jogi/classifier": "github:luvidal/jogi-classifier#<40-char-sha>"
+"@edictus/classifier": "github:luvidal/edictus-classifier#<40-char-sha>"
 ```
 
 Build and commit this package before choosing the SHA, because the parent
@@ -112,7 +112,7 @@ installs the packed `dist/` output.
 `../jogi/lib/server/docsinit.ts`:
 
 ```ts
-import { configure as configureClassifier } from '@jogi/classifier'
+import { configure as configureClassifier } from '@edictus/classifier'
 import doctypes from '@/data/doctypes.json'
 import { geminiGenerate } from './gemini'
 
@@ -126,7 +126,7 @@ server Gemini auth into a client bundle.
 Gemini classify call:
 
 ```ts
-import { classify as classifySegments, NO_CLASIFICADO } from '@jogi/classifier'
+import { classify as classifySegments, NO_CLASIFICADO } from '@edictus/classifier'
 
 const segments = await classifySegments(buffer, mimetype, {
   candidateIds: candidateDoctypes,

@@ -1,4 +1,4 @@
-# @jogi/classifier
+# @edictus/classifier
 
 Lean AI-first document classifier satellite for Jogi. One Gemini call → segments → geometry cleanup.
 
@@ -42,9 +42,9 @@ Lean AI-first document classifier satellite for Jogi. One Gemini call → segmen
 - For concrete production classifier regressions, sync/unit checks are not proof of a fix. Re-run the exact repro bytes with the production-like Vertex path and the generated parent doctypes catalog before claiming the model behavior changed; compare against the pre-fix catalog when the root cause is disputed.
 - Legacy trend JSON copied from Jogi's removed `tests/opus` sandbox lives in `docs/artifacts/opus/`.
 - Keep new manual run artifacts under gitignored `out/`; do not overwrite or delete archived trend data.
-- Doctype YAML refactor guard: pre-YAML snapshot lives at `docs/artifacts/doctype-yaml-refactor/doctypes.pre-yaml-20260514.json`; after generated `../jogi/data/doctypes.json` changes, run `npm run doctype:regression`. Before relying on `classifier`-only catalog tuning for cache invalidation, fix the host cache key because current `@jogi/docs.getPromptVersion()` hashes expanded doctypes and drops unknown fields such as `classifier`.
+- Doctype YAML refactor guard: pre-YAML snapshot lives at `docs/artifacts/doctype-yaml-refactor/doctypes.pre-yaml-20260514.json`; after generated `../jogi/data/doctypes.json` changes, run `npm run doctype:regression`. Before relying on `classifier`-only catalog tuning for cache invalidation, fix the host cache key: it (historically the monolithic `docs` package's `getPromptVersion()`) hashes expanded doctypes and drops unknown fields such as `classifier`.
 - Parent planning context: `../../docs/plans/classification-mega-refactor.md` is the relevant host-side quality plan. It treats quality as satellite prompt/schema/profile + `data/doctypes.json` + host pipeline interactions + model variance. Use it for host fixture/integration-harness context, not as approval to add classifier-side local detectors.
-- The resolved Evucina/Yulian incident plan is `../../docs/plans/crooked.md`. Relevant outcome: fresh user uploads stopped deriving classifier candidates from `request.requirements`, container-fallback narrowing stayed, no-clasificado request-row dedupe was added, and cédula composite work belonged to `@jogi/docs`; no `@jogi/classifier` algorithm work was needed for that incident.
+- The resolved Evucina/Yulian incident plan is `../../docs/plans/crooked.md`. Relevant outcome: fresh user uploads stopped deriving classifier candidates from `request.requirements`, container-fallback narrowing stayed, no-clasificado request-row dedupe was added, and cédula composite work belonged to the then-monolithic `docs` package (since split into `@edictus/cedula`); no `@edictus/classifier` algorithm work was needed for that incident.
 - Immediate satellite corpus gate before paid Gemini runs: validate the per-file manifest first with `npm run corpus:manifest:per-file`. `corpus/per-solicitud` mirrors parent Jogi solicitud-folder behavior; use it for parent-process context, not as the first satellite classifier quality gate.
 - For visual inspection/debugging of per-file failures, use the local HTML review tool: run the dev server with `CORPUS_ROOT=corpus/per-file` and open `http://localhost:4177/review`. Because the curated per-file corpus is now all 100% inspection confidence, set `Trust at/below` to `100` and click Refresh to show all rows. This is the preferred way to inspect corpus rows and previews before changing prompt or annotations.
 - Classifier model (`gemini-2.5-pro`) and generation profile (`temperature: 0, topP: 0.1, seed: 1, candidateCount: 1, thinkingBudget: 1024`) are embedded internally; `classify()` only accepts `{ candidateIds? }`. The `tests/groundtruth.ts` CLI generation flags (`--model`, `--temperature`, etc.) are obsolete and removed; a normal run is labeled `satellite-default-profile`. Truly free-form param experiments live in `dev/` and bypass `classify()`.
@@ -64,12 +64,12 @@ Lean AI-first document classifier satellite for Jogi. One Gemini call → segmen
 Consumed by Jogi via GitHub SHA pin (never `#main`, never `file:`):
 
 ```json
-"@jogi/classifier": "github:luvidal/jogi-classifier#<40-char-sha>"
+"@edictus/classifier": "github:luvidal/edictus-classifier#<40-char-sha>"
 ```
 
 Host wiring should live in a server-only parent init such as `lib/server/docsinit.ts` (`configureClassifier({ doctypes, geminiCall })`) and be gated behind a rollout env flag in `lib/domain/upload/classify.ts`. Do not wire classifier auth from shared/browser-reachable doctype modules. If the host uses `GEMINI_API_KEY` or Vertex auth, wrap it inside the host's `geminiCall`; do not pass raw secrets to this library.
 
-When bumping the pin in jogi, use `npm run update:classifier` (or plain `npm install @jogi/classifier@github:luvidal/jogi-classifier#<sha>` with no extra flags). Do **not** pass `--legacy-peer-deps`: it switches npm to a resolution algorithm that prunes ~750 lines of transitive deps (webpack, terser, ajv, @webassemblyjs/*, etc.) from `package-lock.json`, which then breaks Render's `npm ci` with EUSAGE / "Missing: ... from lock file" and crashes the deploy at build time. This bug bit twice on May 11 (fb38e48a and 9cab162f); the fix is to restore the lockfile from the last known-good commit and re-install without the flag.
+When bumping the pin in jogi, use `npm run update:classifier` (or plain `npm install @edictus/classifier@github:luvidal/edictus-classifier#<sha>` with no extra flags). Do **not** pass `--legacy-peer-deps`: it switches npm to a resolution algorithm that prunes ~750 lines of transitive deps (webpack, terser, ajv, @webassemblyjs/*, etc.) from `package-lock.json`, which then breaks Render's `npm ci` with EUSAGE / "Missing: ... from lock file" and crashes the deploy at build time. This bug bit twice on May 11 (fb38e48a and 9cab162f); the fix is to restore the lockfile from the last known-good commit and re-install without the flag.
 
 ## Behavior bar
 
